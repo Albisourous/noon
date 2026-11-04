@@ -1,4 +1,4 @@
-# OutSleep
+# Napking
 
 Daily sleep-score check-in app. HealthKit → score → friends leaderboard.
 See `DESIGN.md` for the system design.

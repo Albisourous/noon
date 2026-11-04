@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#181e42"/>
+      <stop offset="1" stop-color="#0c1028"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect x="96" y="308" width="100" height="96" rx="14" fill="#232a66"/>
+  <rect x="206" y="272" width="100" height="132" rx="14" fill="#313a8f"/>
+  <rect x="316" y="332" width="100" height="72" rx="14" fill="#232a66"/>
+  <g fill="#f2e7c9">
+    <rect x="208" y="198" width="14" height="60" rx="6"/>
+    <rect x="226" y="212" width="24" height="18" rx="8"/>
+    <rect x="208" y="230" width="96" height="24" rx="11"/>
+    <rect x="214" y="254" width="10" height="16" rx="4"/>
+    <rect x="288" y="254" width="10" height="16" rx="4"/>
+  </g>
+  <path d="M296 162 L320 162 L296 184 L320 184" fill="none" stroke="#8b95ff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M330 132 L344 132 L330 146 L344 146" fill="none" stroke="#ff6b6b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="368" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="800" fill="#f2e7c9" text-anchor="middle">1</text>
+  <text x="146" y="368" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="800" fill="#8b95ff" text-anchor="middle" opacity=".8">2</text>
+  <text x="366" y="378" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="800" fill="#8b95ff" text-anchor="middle" opacity=".8">3</text>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#181e42"/>
+      <stop offset="1" stop-color="#0c1028"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9b0"/>
+      <stop offset="1" stop-color="#f0c979"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect x="96" y="308" width="100" height="96" rx="14" fill="#232a66"/>
+  <rect x="206" y="272" width="100" height="132" rx="14" fill="#313a8f"/>
+  <rect x="316" y="332" width="100" height="72" rx="14" fill="#232a66"/>
+  <path d="M222 178 L290 178 L222 252 L290 252" fill="none" stroke="url(#gold)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M124 254 L170 254 L124 296 L170 296" fill="none" stroke="#8b95ff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M348 292 L382 292 L348 322 L382 322" fill="none" stroke="#5b6cff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="368" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="800" fill="#f2e7c9" text-anchor="middle">1</text>
+  <text x="146" y="368" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="800" fill="#8b95ff" text-anchor="middle" opacity=".8">2</text>
+  <text x="366" y="378" font-family="Helvetica, Arial, sans-serif" font-size="40" font-weight="800" fill="#8b95ff" text-anchor="middle" opacity=".8">3</text>
+</svg>

@@ -1,4 +1,4 @@
-# OutSleep — Design Doc v1
+# Napking — Design Doc v1
 
 **One-liner:** A daily sleep-score check-in app. Every day at your local noon,
 sync last night's sleep, get a score, see how your friends did.
@@ -30,6 +30,7 @@ All inputs derivable from `HKCategoryTypeIdentifier.sleepAnalysis` samples.
 
 - **Sleep night = primary session only** — longest in-bed span among completed, unscored sessions. Naps excluded (Bevel does the same). Sleep is a session `(start, end)`; `wake_date` is a derived label, never a primary key input.
 - **Sleep date = local wake date.** Wake up Tuesday → that's Tuesday's score. Every device agrees on this convention.
+- **Confidence tier per entry** (NOOP pattern — a sparse night reads honestly): staged nights post `confidence=solid`; nights with no real stage data (`inBed`/`asleepUnspecified` only) rescale duration+efficiency to 100 and post `confidence=building`, shown as `~score`. No fabricated awakenings.
 - Bands: <70 Poor, 70–85 Normal, >85 Excellent (Bevel-aligned, easy to explain).
 
 ## Architecture
@@ -59,17 +60,17 @@ Board for user U on date D = `SELECT score FROM board_entries WHERE user_id ∈ 
 
 1. **Timezones** — reveal is per-user local noon; wake-date is per-user local. A Tokyo friend simply competes on *their* last night. Boards show `pending` for friends who haven't checked in.
 2. **Revisions** — raw upserts always overwrite; `board_entries` never do. Locked entries can show a `revised` flag later.
-3. **No watch / no data** — check-in finds no session → entry recorded as `missed`, board shows it. No fake scores.
-4. **Double-sourced data** (Garmin→Health + Watch) — dedup by overlapping time ranges at normalize time in-app; keep the higher-confidence source.
+3. **No watch / no data** — check-in finds no session → entry recorded as `status=missed` (score null), board shows it. No fake scores.
+4. **Double-sourced data** (Garmin→Health + Watch) — overlapping samples from multiple sources describe one night; asleep/awake intervals are union-merged before summing (NOOP `SleepSessionDedup` lesson), so dual writes can't double-count. A source writing real stages marks the session `staged`; stage-less sessions take the redistributed score + `building` confidence (NOOP `SleepMerge` richness rule).
 5. **Late check-in** — `late=true` marker; streaks can consume this later.
 6. **DST / tz changes** — store `tz` at check-in time; never recompute historical wake_dates.
-7. **Session in progress at check-in** (slept past noon, night shift) — board shows `still asleep`; entry posts when the session completes and the app next opens. Scores exist only for completed sessions.
+7. **Session in progress at check-in** (slept past noon, night shift) — HealthKit can't distinguish "just woke" from "still asleep" (no trailing awake sample), so a session whose last non-awake sample ended <30 min ago is refused with a "check in later" prompt. Scores exist only for completed sessions — never lock a partial night (NOOP: a score exists only when it can be computed honestly).
 
 ## Roadmap hooks (build none of this now)
 
 - Android → aggregator (Terra/ROOK) behind the same `/sleep-night` contract
 - Groups → `group_members` table; board query swaps member source
-- Personalized formula → `formula_version=2` + backfill job (raw kept forever)
+- Personalized formula → `formula_version=2` + backfill job (raw kept forever): personal need from recent average instead of fixed 8h, consistency component (bed/wake regularity), optional sleep-debt planning estimate (NOOP `SleepDebt`: 55% unmet-need carry, 10-min deadband, 14-night bound)
 - Streaks, push notifications (APNs), read-only web board
 
 ## Non-goals for v1

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#181e42"/>
+      <stop offset="1" stop-color="#0c1028"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffe9b0"/>
+      <stop offset="1" stop-color="#f0c979"/>
+    </linearGradient>
+    <mask id="m1">
+      <circle cx="140" cy="182" r="15" fill="#fff"/>
+      <circle cx="148" cy="177" r="12" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect x="96" y="150" width="320" height="64" rx="18" fill="url(#gold)"/>
+  <circle cx="140" cy="182" r="26" fill="#141832"/>
+  <circle cx="140" cy="182" r="15" fill="#f2e7c9" mask="url(#m1)"/>
+  <rect x="184" y="172" width="140" height="20" rx="10" fill="#141832" opacity=".35"/>
+  <text x="380" y="201" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="800" fill="#141832" text-anchor="middle">1</text>
+  <rect x="96" y="238" width="252" height="64" rx="18" fill="#313a8f"/>
+  <circle cx="140" cy="270" r="18" fill="#5b6cff"/>
+  <rect x="184" y="260" width="96" height="20" rx="10" fill="#0d1030" opacity=".4"/>
+  <text x="316" y="289" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="800" fill="#8b95ff" text-anchor="middle">2</text>
+  <rect x="96" y="326" width="192" height="64" rx="18" fill="#232a66"/>
+  <circle cx="140" cy="358" r="18" fill="#454f9e"/>
+  <rect x="184" y="348" width="64" height="20" rx="10" fill="#0d1030" opacity=".4"/>
+  <text x="258" y="377" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="800" fill="#5b6cff" text-anchor="middle">3</text>
+</svg>

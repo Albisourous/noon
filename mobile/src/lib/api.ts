@@ -8,18 +8,22 @@ export function localDateString(d = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-export async function checkIn(session: SleepSession) {
+export async function checkIn(payload: SleepSession | 'missed') {
   const { data, error } = await supabase.functions.invoke('checkin', {
-    body: {
-      source: 'healthkit',
-      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      session,
-    },
+    body:
+      payload === 'missed'
+        ? { missed: true, tz: Intl.DateTimeFormat().resolvedOptions().timeZone }
+        : {
+            source: 'healthkit',
+            tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            session: payload,
+          },
   });
   if (error) throw error;
   return data as {
     wake_date: string;
-    score: number;
+    score: number | null;
+    status?: 'scored' | 'missed';
     already_posted: boolean;
   };
 }

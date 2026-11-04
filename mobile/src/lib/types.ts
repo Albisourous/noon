@@ -28,10 +28,13 @@ export interface SleepNight {
 export interface BoardEntry {
   user_id: string;
   wake_date: string;
-  score: number;
+  score: number | null;
   formula_version: number;
   posted_at: string;
   late: boolean;
+  // null when the member has no entry yet (pending)
+  status: 'scored' | 'missed' | null;
+  confidence: 'solid' | 'building' | null;
 }
 
 export interface BoardRow extends BoardEntry {
@@ -45,4 +48,15 @@ export interface SleepSession {
   asleepMin: number;
   inBedMin: number;
   awakenings: number;
+  // false when the source wrote no real stage data (inBed +
+  // asleepUnspecified only) — scored with redistributed weights,
+  // flagged 'building' confidence on the board
+  staged: boolean;
 }
+
+// What a check-in can score right now (see getSleepState).
+export type SleepState =
+  | { kind: 'session'; session: SleepSession }
+  | { kind: 'still_asleep' }
+  | { kind: 'none' }
+  | { kind: 'unavailable' };

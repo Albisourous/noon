@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 320">
+  <defs>
+    <linearGradient id="goldw" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9b0"/>
+      <stop offset="1" stop-color="#f0c979"/>
+    </linearGradient>
+  </defs>
+  <text x="140" y="228" font-family="'Arial Rounded MT Bold','Nunito','SF Pro Rounded',Helvetica,Arial,sans-serif" font-size="160" font-weight="800" letter-spacing="-3"><tspan fill="#f2e7c9">nap</tspan><tspan fill="#8b95ff">k&#x131;ng</tspan></text>
+  <path d="M472 118 L472 86 L488 102 L496 78 L504 102 L520 86 L520 118 Z" fill="url(#goldw)"/>
+  <rect x="472" y="116" width="48" height="11" rx="5" fill="url(#goldw)"/>
+</svg>

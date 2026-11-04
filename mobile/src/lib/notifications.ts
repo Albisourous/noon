@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-const NOON_NOTIFICATION_ID = 'outsleep-noon-daily';
+const NOON_NOTIFICATION_ID = 'napking-noon-daily';
 
 export async function scheduleNoonReminder(): Promise<boolean> {
   const { status } = await Notifications.requestPermissionsAsync();

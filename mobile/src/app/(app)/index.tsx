@@ -9,10 +9,10 @@ import {
   View,
 } from 'react-native';
 import { checkIn, fetchBoard, localDateString } from '../../lib/api';
-import { getLatestSleepSession } from '../../lib/sleep';
+import { getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
-import type { BoardRow } from '../../lib/types';
+import type { BoardRow, SleepSession } from '../../lib/types';
 
 export default function Board() {
   const [rows, setRows] = useState<BoardRow[]>([]);
@@ -50,25 +50,60 @@ export default function Board() {
     scheduleNoonReminder();
   }, [load]);
 
-  async function onCheckIn() {
-    setBusy(true);
-    setStatus('');
-    try {
-      const session = await getLatestSleepSession();
-      if (!session) {
-        Alert.alert(
-          'No sleep found',
-          "No completed sleep session in the last 36 hours. If you're still asleep, check in after you wake up.",
-        );
-        return;
-      }
-      const result = await checkIn(session);
+  async function postCheckIn(payload: SleepSession | 'missed') {
+    const result = await checkIn(payload);
+    if (result.status === 'missed') {
+      setStatus(
+        result.already_posted
+          ? `Already posted for ${result.wake_date}`
+          : `Missed day recorded for ${result.wake_date}`,
+      );
+    } else {
       setStatus(
         result.already_posted
           ? `Already posted for ${result.wake_date}: ${result.score}`
           : `Score ${result.score} posted for ${result.wake_date}`,
       );
-      await load();
+    }
+    await load();
+  }
+
+  async function onCheckIn() {
+    setBusy(true);
+    setStatus('');
+    try {
+      const state = await getSleepState();
+      switch (state.kind) {
+        case 'unavailable':
+          Alert.alert(
+            'Health access needed',
+            'Allow sleep data access in Settings to check in.',
+          );
+          return;
+        case 'still_asleep':
+          Alert.alert(
+            'Still asleep?',
+            'Your latest sleep session may still be in progress. Check in after you wake up so a partial night is not posted.',
+          );
+          return;
+        case 'none':
+          Alert.alert(
+            'No sleep found',
+            'No completed sleep session in the last 36 hours. Record a missed day?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Record missed',
+                onPress: () =>
+                  postCheckIn('missed').catch((e) => setStatus(String(e))),
+              },
+            ],
+          );
+          return;
+        case 'session':
+          await postCheckIn(state.session);
+          return;
+      }
     } catch (e) {
       setStatus(String(e));
     } finally {
@@ -91,9 +126,11 @@ export default function Board() {
         <Text style={styles.checkinText}>
           {busy
             ? 'Syncing…'
-            : myRow?.score != null
+            : myRow?.status === 'scored'
               ? `Checked in — ${myRow.score}`
-              : 'Check in'}
+              : myRow?.status === 'missed'
+                ? 'Checked in — missed'
+                : 'Check in'}
         </Text>
       </Pressable>
       {status ? <Text style={styles.status}>{status}</Text> : null}
@@ -125,7 +162,13 @@ export default function Board() {
               {item.late ? <Text style={styles.late}>late</Text> : null}
             </View>
             <Text style={styles.score}>
-              {item.score === null ? 'pending' : String(item.score)}
+              {item.status === 'missed'
+                ? 'missed'
+                : item.score === null
+                  ? 'pending'
+                  : item.confidence === 'building'
+                    ? `~${item.score}`
+                    : String(item.score)}
             </Text>
           </View>
         )}
