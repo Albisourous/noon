@@ -9,7 +9,7 @@ sync last night's sleep, get a score, see how your friends did.
 |---|---|---|
 | Platform | Expo / React Native, iOS first | One codebase → Android later; HealthKit needs native |
 | Ingest | HealthKit only for v1 | Free; covers Apple Watch + every device that writes to Apple Health (Garmin, Whoop, Oura all can). Aggregators (Terra/Rook) deferred to Android phase |
-| Sync trigger | Check-in at local noon (BeReal model) | Local notification → open app → HealthKit sync → score posts. No real-time SLA, no push infra, no timezone-collision problem |
+| Sync trigger | Check-in prompt at local noon (BeReal model) | Local notification → open app → HealthKit sync → score posts. Noon is the ritual prompt, not the scoring boundary — a session scores whenever it completes and the user next opens the app |
 | Social model | Friends (mutual), not groups | Boards are per-user views: "me + my friends." Groups deferred |
 | Visibility | Score only | Members see numbers, not breakdowns |
 | Scoring | Absolute targets, computed by us | Apple Health emits raw stages, NOT a score. Personalized targets = future `formula_version` upgrade |
@@ -28,7 +28,7 @@ All inputs derivable from `HKCategoryTypeIdentifier.sleepAnalysis` samples.
 | Efficiency | 25 | `asleep_time / in_bed_time`, capped at 95% → full marks |
 | Continuity | 15 | `max(0, 15 − 2×(awakenings − 1))` from `awake` segments inside the sleep session; if no stage data, redistribute to duration/efficiency |
 
-- **Sleep night = primary session only** — longest in-bed span ending before local noon. Naps excluded (Bevel does the same).
+- **Sleep night = primary session only** — longest in-bed span among completed, unscored sessions. Naps excluded (Bevel does the same). Sleep is a session `(start, end)`; `wake_date` is a derived label, never a primary key input.
 - **Sleep date = local wake date.** Wake up Tuesday → that's Tuesday's score. Every device agrees on this convention.
 - Bands: <70 Poor, 70–85 Normal, >85 Excellent (Bevel-aligned, easy to explain).
 
@@ -63,6 +63,7 @@ Board for user U on date D = `SELECT score FROM board_entries WHERE user_id ∈ 
 4. **Double-sourced data** (Garmin→Health + Watch) — dedup by overlapping time ranges at normalize time in-app; keep the higher-confidence source.
 5. **Late check-in** — `late=true` marker; streaks can consume this later.
 6. **DST / tz changes** — store `tz` at check-in time; never recompute historical wake_dates.
+7. **Session in progress at check-in** (slept past noon, night shift) — board shows `still asleep`; entry posts when the session completes and the app next opens. Scores exist only for completed sessions.
 
 ## Roadmap hooks (build none of this now)
 
@@ -76,10 +77,11 @@ Board for user U on date D = `SELECT score FROM board_entries WHERE user_id ∈ 
 Recovery/strain scores, nap scoring, sleep coaching, global leaderboards,
 manual score entry, breakdown visibility to friends.
 
-## Open questions for you to attack
+## Resolved design questions
 
-- Sleep sessions spanning noon (night-shift workers sleep 8am–4pm): does
-  "wake date" still work, or do they get skipped? Worth deciding now — it's
-  a schema-level assumption, not a UI detail.
-- Friend graph: symmetric confirm both ways — what if someone accepts a
-  request mid-day after entries already posted? Do they see today's board?
+- **Shift workers / sessions spanning noon**: solved by the session model —
+  a session scores when it *completes*, not at a clock boundary. `wake_date`
+  derives from `session.end_time` in the sleeper's local tz.
+- **Mid-day friend acceptance**: boards are derived per-viewer at read time,
+  not materialized per-friendship. New friends immediately see each other's
+  existing entries — friendship is standing consent, no backfill needed.
