@@ -1,4 +1,4 @@
-# Noon — Design Doc v1
+# OutSleep — Design Doc v1
 
 **One-liner:** A daily sleep-score check-in app. Every day at your local noon,
 sync last night's sleep, get a score, see how your friends did.
