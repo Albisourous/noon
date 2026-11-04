@@ -1,0 +1,177 @@
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import {
+  acceptFriendRequest,
+  fetchFriendships,
+  searchHandle,
+  sendFriendRequest,
+} from '../../lib/api';
+import { supabase } from '../../lib/supabase';
+import type { Friendship, Profile } from '../../lib/types';
+
+interface FriendRow {
+  friendshipId: string;
+  otherId: string;
+  handle: string | null;
+  status: 'pending' | 'accepted';
+  incoming: boolean;
+}
+
+export default function Friends() {
+  const [myId, setMyId] = useState('');
+  const [rows, setRows] = useState<FriendRow[]>([]);
+  const [query, setQuery] = useState('');
+
+  const load = useCallback(async () => {
+    const uid = (await supabase.auth.getUser()).data.user?.id ?? '';
+    setMyId(uid);
+    const friendships = await fetchFriendships();
+    const otherIds = friendships.map((f) =>
+      f.requester_id === uid ? f.addressee_id : f.requester_id,
+    );
+    let profiles: Profile[] = [];
+    if (otherIds.length) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, handle')
+        .in('id', otherIds);
+      profiles = (data as Profile[]) ?? [];
+    }
+    const byId = new Map(profiles.map((p) => [p.id, p]));
+    setRows(
+      friendships.map((f) => {
+        const otherId = f.requester_id === uid ? f.addressee_id : f.requester_id;
+        return {
+          friendshipId: f.id,
+          otherId,
+          handle: byId.get(otherId)?.handle ?? null,
+          status: f.status,
+          incoming: f.addressee_id === uid,
+        };
+      }),
+    );
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function onAdd() {
+    const target = await searchHandle(query);
+    if (!target) {
+      Alert.alert('Not found', `No user with handle "${query.trim()}".`);
+      return;
+    }
+    if (target.id === myId) {
+      Alert.alert('That is you');
+      return;
+    }
+    const { error } = await sendFriendRequest(target.id);
+    if (error) Alert.alert('Could not add', error.message);
+    else {
+      setQuery('');
+      await load();
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Friends</Text>
+
+      <View style={styles.addRow}>
+        <TextInput
+          style={styles.input}
+          placeholder="add by handle"
+          placeholderTextColor="#666"
+          autoCapitalize="none"
+          value={query}
+          onChangeText={setQuery}
+        />
+        <Pressable style={styles.addButton} onPress={onAdd}>
+          <Text style={styles.addText}>Add</Text>
+        </Pressable>
+      </View>
+
+      <FlatList
+        data={rows}
+        keyExtractor={(r) => r.friendshipId}
+        renderItem={({ item }) => (
+          <View style={styles.row}>
+            <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
+            {item.status === 'pending' ? (
+              item.incoming ? (
+                <Pressable
+                  style={styles.acceptButton}
+                  onPress={async () => {
+                    await acceptFriendRequest(item.friendshipId);
+                    await load();
+                  }}
+                >
+                  <Text style={styles.acceptText}>Accept</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.pending}>requested</Text>
+              )
+            ) : null}
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No friends yet.</Text>
+        }
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a0f',
+    paddingTop: 64,
+    paddingHorizontal: 20,
+  },
+  title: { color: '#fff', fontSize: 32, fontWeight: '800', marginBottom: 20 },
+  addRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  input: {
+    flex: 1,
+    backgroundColor: '#1a1a24',
+    color: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+  },
+  addButton: {
+    backgroundColor: '#5b6cff',
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+  },
+  addText: { color: '#fff', fontWeight: '700' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a24',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    justifyContent: 'space-between',
+  },
+  handle: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  pending: { color: '#666', fontSize: 13 },
+  acceptButton: {
+    backgroundColor: '#2fbf71',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  acceptText: { color: '#fff', fontWeight: '700' },
+  empty: { color: '#666', textAlign: 'center', marginTop: 40 },
+});
