@@ -1,0 +1,85 @@
+# Noon — Design Doc v1
+
+**One-liner:** A daily sleep-score check-in app. Every day at your local noon,
+sync last night's sleep, get a score, see how your friends did.
+
+## Product model (locked decisions)
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Platform | Expo / React Native, iOS first | One codebase → Android later; HealthKit needs native |
+| Ingest | HealthKit only for v1 | Free; covers Apple Watch + every device that writes to Apple Health (Garmin, Whoop, Oura all can). Aggregators (Terra/Rook) deferred to Android phase |
+| Sync trigger | Check-in at local noon (BeReal model) | Local notification → open app → HealthKit sync → score posts. No real-time SLA, no push infra, no timezone-collision problem |
+| Social model | Friends (mutual), not groups | Boards are per-user views: "me + my friends." Groups deferred |
+| Visibility | Score only | Members see numbers, not breakdowns |
+| Scoring | Absolute targets, computed by us | Apple Health emits raw stages, NOT a score. Personalized targets = future `formula_version` upgrade |
+| Freeze | Score locked at check-in | Late device revisions update raw storage, not the locked entry |
+| Check-in policy | Forgiving — post anytime, marked late | Streaks deferred post-MVP |
+| Backend | Supabase (Postgres + Auth + Edge Functions) | Fast to ship, real SQL, scales fine at this size |
+| Notifications | iOS local notifications | Free, no APNs needed for v1 |
+
+## Score formula v1 (`formula_version = 1`)
+
+All inputs derivable from `HKCategoryTypeIdentifier.sleepAnalysis` samples.
+
+| Component | Points | Definition |
+|---|---|---|
+| Duration | 60 | `min(asleep_hours / 8.0, 1.0) × 60` |
+| Efficiency | 25 | `asleep_time / in_bed_time`, capped at 95% → full marks |
+| Continuity | 15 | `max(0, 15 − 2×(awakenings − 1))` from `awake` segments inside the sleep session; if no stage data, redistribute to duration/efficiency |
+
+- **Sleep night = primary session only** — longest in-bed span ending before local noon. Naps excluded (Bevel does the same).
+- **Sleep date = local wake date.** Wake up Tuesday → that's Tuesday's score. Every device agrees on this convention.
+- Bands: <70 Poor, 70–85 Normal, >85 Excellent (Bevel-aligned, easy to explain).
+
+## Architecture
+
+```
+iPhone (Expo)
+  ├─ HealthKit read (react-native-healthkit)
+  ├─ Local notification @ 12:00 user-local
+  └─ On open: normalize sleep samples → POST /sleep-night
+                                        │
+Supabase                                ▼
+  ├─ Postgres: users, friendships, sleep_nights, board_entries
+  ├─ Edge Function: ingest → upsert raw → compute score → lock entry
+  └─ Board query: scores for (me ∪ friends) on my wake-date
+```
+
+### Tables (sketch)
+
+- `users(id, handle, tz, created_at)`
+- `friendships(requester_id, addressee_id, status)` — mutual only; `status=accepted`
+- `sleep_nights(user_id, wake_date, source, raw_json, asleep_min, inbed_min, awakenings, updated_at)` — PK `(user_id, wake_date)`, upsert = latest wins (industry convention per Terra docs)
+- `board_entries(user_id, wake_date, score, formula_version, posted_at, late)` — written once at check-in, immutable after
+
+Board for user U on date D = `SELECT score FROM board_entries WHERE user_id ∈ (U ∪ accepted_friends(U)) AND wake_date = D`.
+
+## Edge cases (designed, not discovered)
+
+1. **Timezones** — reveal is per-user local noon; wake-date is per-user local. A Tokyo friend simply competes on *their* last night. Boards show `pending` for friends who haven't checked in.
+2. **Revisions** — raw upserts always overwrite; `board_entries` never do. Locked entries can show a `revised` flag later.
+3. **No watch / no data** — check-in finds no session → entry recorded as `missed`, board shows it. No fake scores.
+4. **Double-sourced data** (Garmin→Health + Watch) — dedup by overlapping time ranges at normalize time in-app; keep the higher-confidence source.
+5. **Late check-in** — `late=true` marker; streaks can consume this later.
+6. **DST / tz changes** — store `tz` at check-in time; never recompute historical wake_dates.
+
+## Roadmap hooks (build none of this now)
+
+- Android → aggregator (Terra/ROOK) behind the same `/sleep-night` contract
+- Groups → `group_members` table; board query swaps member source
+- Personalized formula → `formula_version=2` + backfill job (raw kept forever)
+- Streaks, push notifications (APNs), read-only web board
+
+## Non-goals for v1
+
+Recovery/strain scores, nap scoring, sleep coaching, global leaderboards,
+manual score entry, breakdown visibility to friends.
+
+## Open questions for you to attack
+
+- Sleep sessions spanning noon (night-shift workers sleep 8am–4pm): does
+  "wake date" still work, or do they get skipped? Worth deciding now — it's
+  a schema-level assumption, not a UI detail.
+- Friend graph: symmetric confirm both ways — what if someone accepts a
+  request mid-day after entries already posted? Do they see today's board?
