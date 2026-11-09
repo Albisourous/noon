@@ -33,7 +33,7 @@ export default function Board() {
         fetchBoard(today),
         fetchMyProfile(),
       ]);
-      setMyId(userData.user?.id ?? '');
+      setMyId(userData.user?.id ?? profile?.id ?? '');
       setNeedsHandle(profile?.handle == null);
       setRows(
         [...board].sort((a, b) =>

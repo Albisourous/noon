@@ -1,5 +1,12 @@
-import { supabase } from './supabase';
+import { supabase, isConfigured } from './supabase';
 import type { SleepSession, BoardRow, Profile, Friendship } from './types';
+
+const DEMO_BOARD: BoardRow[] = [
+  { user_id: 'me', handle: 'you', wake_date: '', score: 87, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f1', handle: 'ehsan', wake_date: '', score: 91, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f2', handle: 'sarah', wake_date: '', score: 74, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: true },
+  { user_id: 'f3', handle: 'marcus', wake_date: '', score: null, status: null, confidence: null, formula_version: 1, posted_at: '', late: false },
+];
 
 export function localDateString(d = new Date()): string {
   const y = d.getFullYear();
@@ -9,6 +16,12 @@ export function localDateString(d = new Date()): string {
 }
 
 export async function checkIn(payload: SleepSession | 'missed') {
+  if (!isConfigured) {
+    const today = localDateString();
+    return payload === 'missed'
+      ? { wake_date: today, score: null, status: 'missed' as const, already_posted: false }
+      : { wake_date: today, score: 87, status: 'scored' as const, already_posted: false };
+  }
   const { data, error } = await supabase.functions.invoke('checkin', {
     body:
       payload === 'missed'
@@ -29,6 +42,7 @@ export async function checkIn(payload: SleepSession | 'missed') {
 }
 
 export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
+  if (!isConfigured) return DEMO_BOARD;
   const { data, error } = await supabase.rpc('friend_board', {
     p_wake_date: wakeDate,
   });
@@ -37,6 +51,9 @@ export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
 }
 
 export async function fetchMyProfile(): Promise<Profile | null> {
+  if (!isConfigured) {
+    return { id: 'me', handle: 'you', tz: 'America/New_York', created_at: '' };
+  }
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -77,6 +94,12 @@ export async function acceptFriendRequest(friendshipId: string) {
 }
 
 export async function fetchFriendships(): Promise<Friendship[]> {
+  if (!isConfigured) {
+    return [
+      { id: 'x1', requester_id: 'me', addressee_id: 'f1', status: 'accepted', created_at: '' },
+      { id: 'x2', requester_id: 'f4', addressee_id: 'me', status: 'pending', created_at: '' },
+    ];
+  }
   const { data, error } = await supabase.from('friendships').select('*');
   if (error) throw error;
   return data as Friendship[];

@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 import { isConfigured, supabase } from '../lib/supabase';
 
@@ -21,15 +20,12 @@ export default function RootLayout() {
 
   if (!ready) return null;
 
+  // Demo mode: no backend configured → render the app with mock data.
   if (!isConfigured) {
     return (
-      <View style={styles.config}>
-        <Text style={styles.configTitle}>Supabase not configured</Text>
-        <Text style={styles.configBody}>
-          Create mobile/.env.local with EXPO_PUBLIC_SUPABASE_URL and
-          EXPO_PUBLIC_SUPABASE_ANON_KEY, then restart.
-        </Text>
-      </View>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(app)" />
+      </Stack>
     );
   }
 
@@ -44,15 +40,3 @@ export default function RootLayout() {
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  config: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  configTitle: { color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 12 },
-  configBody: { color: '#888', fontSize: 15, textAlign: 'center', lineHeight: 22 },
-});
