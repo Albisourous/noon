@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Napking",
-    "slug": "napking",
+    "name": "Sleeple",
+    "slug": "sleeple",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "napking",
+    "scheme": "sleeple",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.napking.app",
+      "bundleIdentifier": "com.sleeple.app",
       "infoPlist": {
         "UIBackgroundModes": [
           "fetch",
@@ -25,7 +25,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.napking.app"
+      "package": "com.sleeple.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -36,8 +36,8 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Napking reads your sleep data to compute your daily sleep score.",
-          "NSHealthUpdateUsageDescription": "Napking does not write health data.",
+          "NSHealthShareUsageDescription": "Sleeple reads your sleep data to compute your daily sleep score.",
+          "NSHealthUpdateUsageDescription": "Sleeple does not write health data.",
           "background": false
         }
       ],

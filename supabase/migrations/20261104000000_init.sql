@@ -1,4 +1,4 @@
--- Napking v1 schema (per DESIGN.md)
+-- Sleeple v1 schema (per DESIGN.md)
 
 create table profiles (
   id uuid primary key references auth.users (id) on delete cascade,

@@ -6,10 +6,11 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import { checkIn, fetchBoard, localDateString } from '../../lib/api';
-import { getSleepState } from '../../lib/sleep';
+import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from '../../lib/api';
+import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import type { BoardRow, SleepSession } from '../../lib/types';
@@ -20,15 +21,20 @@ export default function Board() {
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState('');
+  const [needsHandle, setNeedsHandle] = useState<boolean | null>(null);
+  const [handleInput, setHandleInput] = useState('');
+  const [healthLinked, setHealthLinked] = useState(false);
   const today = localDateString();
 
   const load = useCallback(async () => {
     try {
-      const [{ data: userData }, board] = await Promise.all([
+      const [{ data: userData }, board, profile] = await Promise.all([
         supabase.auth.getUser(),
         fetchBoard(today),
+        fetchMyProfile(),
       ]);
       setMyId(userData.user?.id ?? '');
+      setNeedsHandle(profile?.handle == null);
       setRows(
         [...board].sort((a, b) =>
           a.score === null && b.score === null
@@ -112,6 +118,45 @@ export default function Board() {
   }
 
   const myRow = rows.find((r) => r.user_id === myId);
+
+  if (needsHandle) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Welcome to Sleeple</Text>
+        <Text style={styles.onboardHint}>
+          One score a day. Set your handle so friends can find you, then
+          connect Apple Health.
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="pick a handle"
+          placeholderTextColor="#666"
+          autoCapitalize="none"
+          value={handleInput}
+          onChangeText={setHandleInput}
+        />
+        <Pressable
+          style={styles.checkinButton}
+          onPress={async () => {
+            const { error } = await setHandle(handleInput);
+            if (error) {
+              setStatus(error.message);
+              return;
+            }
+            const granted = await ensureSleepPermission();
+            setHealthLinked(granted);
+            await scheduleNoonReminder();
+            setNeedsHandle(false);
+          }}
+        >
+          <Text style={styles.checkinText}>
+            {healthLinked ? 'Connected — continue' : 'Save & connect Health'}
+          </Text>
+        </Pressable>
+        {status ? <Text style={styles.status}>{status}</Text> : null}
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -199,6 +244,20 @@ const styles = StyleSheet.create({
   checkinDisabled: { opacity: 0.6 },
   checkinText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   status: { color: '#888', textAlign: 'center', marginBottom: 8 },
+  onboardHint: {
+    color: '#888',
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: '#1a1a24',
+    color: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    marginBottom: 12,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

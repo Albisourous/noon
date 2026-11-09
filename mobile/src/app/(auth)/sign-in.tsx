@@ -46,7 +46,7 @@ export default function SignIn() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Text style={styles.title}>Napking</Text>
+      <Text style={styles.title}>Sleeple</Text>
       <Text style={styles.subtitle}>Sleep. Score. Compete.</Text>
 
       {stage === 'email' ? (
