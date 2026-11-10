@@ -278,6 +278,8 @@ function BoardRowItem({
   myId: string;
 }) {
   const anim = useRef(new Animated.Value(0)).current;
+  const pendingPulse = useRef(new Animated.Value(1)).current;
+  const isPending = item.status !== 'missed' && item.score === null;
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -288,6 +290,26 @@ function BoardRowItem({
       useNativeDriver: true,
     }).start();
   }, [anim, index]);
+
+  useEffect(() => {
+    if (!isPending) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pendingPulse, {
+          toValue: 0.45,
+          duration: 1100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pendingPulse, {
+          toValue: 1,
+          duration: 1100,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isPending, pendingPulse]);
 
   return (
     <Animated.View
@@ -324,7 +346,12 @@ function BoardRowItem({
         </Text>
         {item.late ? <Badge label="late" /> : null}
       </View>
-      <Text style={styles.score}>
+      <Animated.Text
+        style={[
+          styles.score,
+          isPending && { color: colors.muted, opacity: pendingPulse },
+        ]}
+      >
         {item.status === 'missed'
           ? 'missed'
           : item.score === null
@@ -332,7 +359,7 @@ function BoardRowItem({
             : item.confidence === 'building'
               ? `~${item.score}`
               : String(item.score)}
-      </Text>
+      </Animated.Text>
     </Animated.View>
   );
 }
