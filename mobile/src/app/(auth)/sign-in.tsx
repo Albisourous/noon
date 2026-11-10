@@ -100,6 +100,7 @@ export default function SignIn() {
         </View>
       ) : (
         <View style={styles.form}>
+          <Text style={styles.eyebrow}>check your email</Text>
           <Text style={styles.hint}>Code sent to {email}</Text>
           <TextInput
             style={[styles.input, focused === 'otp' && styles.inputFocused]}
@@ -165,6 +166,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xxl + spacing.lg,
   },
   form: { width: '100%', maxWidth: layout.formMaxWidth },
+  eyebrow: {
+    ...font.eyebrow,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
+  },
   hint: {
     color: colors.secondary,
     marginBottom: spacing.md,
@@ -173,7 +179,7 @@ const styles = StyleSheet.create({
   input: {
     ...font.body,
     backgroundColor: colors.card,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,
