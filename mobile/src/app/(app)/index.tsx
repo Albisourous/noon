@@ -38,6 +38,7 @@ import { EmptyState } from '../../components/EmptyState';
 import NightFooter from '../../components/NightFooter';
 import PressableScale from '../../components/PressableScale';
 import { SkeletonRows } from '../../components/SkeletonRows';
+import { SleepCat } from '../../components/SleepCat';
 
 export default function Board() {
   const [rows, setRows] = useState<BoardRow[]>([]);
@@ -215,6 +216,10 @@ export default function Board() {
   if (needsHandle) {
     return (
       <View style={screen}>
+        <SleepCat
+          size={140}
+          style={{ alignSelf: 'center', marginBottom: spacing.lg }}
+        />
         <Text style={styles.eyebrow}>getting started</Text>
         <Text style={styles.title}>Welcome to Sleeple</Text>
         <Text style={styles.onboardHint}>

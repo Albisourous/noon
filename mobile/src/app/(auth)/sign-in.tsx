@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import PressableScale from '../../components/PressableScale';
+import { SleepCat } from '../../components/SleepCat';
 import { DEMO_STATE } from '../../lib/demoState';
 import { supabase } from '../../lib/supabase';
 import {
@@ -61,6 +62,7 @@ export default function SignIn() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <SleepCat size={96} style={{ marginBottom: spacing.md }} />
       <Text style={styles.title}>Sleeple</Text>
       <Text style={styles.subtitle}>Sleep. Score. Compete.</Text>
 

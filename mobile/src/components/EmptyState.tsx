@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors, font, layout, motion, radius, spacing } from '../lib/theme';
+import { SleepCat } from './SleepCat';
 
 export function EmptyState({ title, hint }: { title: string; hint: string }) {
   const breathe = useRef(new Animated.Value(1)).current;
@@ -28,6 +29,7 @@ export function EmptyState({ title, hint }: { title: string; hint: string }) {
 
   return (
     <View style={styles.wrap}>
+      <SleepCat size={110} style={styles.cat} />
       <Animated.View style={[styles.dot, { opacity: breathe }]} />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.hint}>{hint}</Text>
@@ -40,6 +42,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: layout.emptyTop,
     paddingHorizontal: spacing.xl,
+  },
+  cat: {
+    marginBottom: spacing.sm,
   },
   dot: {
     width: layout.emptyDotSize,
