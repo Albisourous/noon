@@ -89,14 +89,15 @@ export default function Board() {
     load();
   }, [load]);
 
-  // dev-only: scroll long board to verify tab-bar minimize
+  // dev-only: scroll long board + seed status chip for screenshots
   useEffect(() => {
     if (DEMO_STATE !== 'long' || !__DEV__) return;
+    flashStatus(`Score 87 posted for ${today}`);
     const t = setTimeout(() => {
       listRef.current?.scrollToOffset({ offset: 600, animated: true });
     }, 1500);
     return () => clearTimeout(t);
-  }, []);
+  }, [flashStatus, today]);
 
   async function postCheckIn(payload: SleepSession | 'missed') {
     const result = await checkIn(payload);
@@ -538,9 +539,14 @@ const styles = StyleSheet.create({
   checkinGlow: { borderRadius: radius.lg, ...glow.accentSoftGlow },
   checkinText: { ...font.button },
   status: {
-    color: colors.secondary,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
+    ...font.caption,
+    alignSelf: 'center',
+    backgroundColor: colors.chip,
+    borderRadius: radius.pill,
+    paddingHorizontal: layout.badgePadX,
+    paddingVertical: layout.badgePadY,
+    marginTop: spacing.sm,
+    overflow: 'hidden',
   },
   onboardHint: {
     ...font.bodySm,

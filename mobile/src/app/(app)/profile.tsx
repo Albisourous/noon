@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: radius.md,
     paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
     justifyContent: 'center',
   },
   saveText: { ...font.button },
