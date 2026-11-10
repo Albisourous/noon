@@ -14,7 +14,7 @@ import {
 import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from '../../lib/api';
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
-import { supabase } from '../../lib/supabase';
+import { isConfigured, supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
 import type { BoardRow, SleepSession } from '../../lib/types';
 import { Badge } from '../../components/Badge';
@@ -91,6 +91,17 @@ export default function Board() {
     setBusy(true);
     setStatus('');
     try {
+      if (!isConfigured) {
+        await postCheckIn({
+          start: '',
+          end: '',
+          asleepMin: 0,
+          inBedMin: 0,
+          awakenings: 0,
+          staged: false,
+        });
+        return;
+      }
       const state = await getSleepState();
       switch (state.kind) {
         case 'unavailable':
