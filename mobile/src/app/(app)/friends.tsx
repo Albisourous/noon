@@ -263,8 +263,8 @@ const styles = StyleSheet.create({
   shareButton: {
     alignSelf: 'center',
     marginTop: 24,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   shareText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
   row: {
@@ -280,8 +280,8 @@ const styles = StyleSheet.create({
   acceptButton: {
     backgroundColor: colors.success,
     borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   acceptText: { color: colors.text, fontWeight: '700' },
 });

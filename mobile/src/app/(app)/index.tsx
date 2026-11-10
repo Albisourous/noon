@@ -444,8 +444,8 @@ const styles = StyleSheet.create({
   shareButton: {
     alignSelf: 'center',
     marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   shareText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
   checkinInner: {
