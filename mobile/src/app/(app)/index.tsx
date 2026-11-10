@@ -327,6 +327,7 @@ function BoardRowItem({
   const pendingPulse = useRef(new Animated.Value(1)).current;
   const isPending = item.status !== 'missed' && item.score === null;
   const isMissed = item.status === 'missed';
+  const isSelf = item.user_id === myId;
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -362,6 +363,7 @@ function BoardRowItem({
     <Animated.View
       style={[
         styles.row,
+        isSelf && styles.rowSelf,
         {
           opacity: anim,
           transform: [
@@ -390,7 +392,7 @@ function BoardRowItem({
         <Text style={[styles.handle, isMissed && styles.missedText]}>
           {item.handle ?? 'unnamed'}
         </Text>
-        {item.user_id === myId ? <Badge label="you" /> : null}
+        {isSelf ? <Badge label="you" /> : null}
         {item.late ? <Badge label="late" /> : null}
       </View>
       <Animated.Text
@@ -476,7 +478,10 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 8,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
+  rowSelf: { borderColor: 'rgba(91,108,255,0.35)' },
   rowFill: {
     position: 'absolute',
     left: 0,
