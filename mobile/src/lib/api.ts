@@ -2,7 +2,7 @@ import { supabase, isConfigured } from './supabase';
 import type { SleepSession, BoardRow, Profile, Friendship } from './types';
 
 const DEMO_BOARD: BoardRow[] = [
-  { user_id: 'me', handle: 'you', wake_date: '', score: 87, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'me', handle: 'albin', wake_date: '', score: 87, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
   { user_id: 'f1', handle: 'ehsan', wake_date: '', score: 91, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
   { user_id: 'f2', handle: 'sarah', wake_date: '', score: 74, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: true },
   { user_id: 'f3', handle: 'marcus', wake_date: '', score: null, status: null, confidence: null, formula_version: 1, posted_at: '', late: false },
@@ -52,7 +52,7 @@ export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
 
 export async function fetchMyProfile(): Promise<Profile | null> {
   if (!isConfigured) {
-    return { id: 'me', handle: 'you', tz: 'America/New_York', created_at: '' };
+    return { id: 'me', handle: 'albin', tz: 'America/New_York', created_at: '' };
   }
   const { data, error } = await supabase
     .from('profiles')
