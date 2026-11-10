@@ -35,6 +35,7 @@ export default function Friends() {
   const [myId, setMyId] = useState('');
   const [rows, setRows] = useState<FriendRow[]>([]);
   const [query, setQuery] = useState('');
+  const [queryFocused, setQueryFocused] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [status, setStatus] = useState('');
   const statusTimer = useRef<number | null>(null);
@@ -107,10 +108,14 @@ export default function Friends() {
 
       <View style={styles.addRow}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, queryFocused && styles.inputFocused]}
           placeholder="add by handle"
           placeholderTextColor={colors.muted}
           autoCapitalize="none"
+          returnKeyType="search"
+          onSubmitEditing={onAdd}
+          onFocus={() => setQueryFocused(true)}
+          onBlur={() => setQueryFocused(false)}
           value={query}
           onChangeText={setQuery}
         />
@@ -165,7 +170,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 14,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
+  inputFocused: { borderColor: colors.accent },
   addButton: {
     backgroundColor: colors.accent,
     borderRadius: radius.md,
