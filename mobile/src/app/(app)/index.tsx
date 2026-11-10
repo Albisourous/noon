@@ -250,33 +250,74 @@ export default function Board() {
           />
         }
         renderItem={({ item, index }) => (
-          <View style={styles.row}>
-            <Text style={styles.rank}>
-              {item.score === null ? '·' : `#${index + 1}`}
-            </Text>
-            <View style={styles.rowMain}>
-              <Text style={styles.handle}>
-                {item.handle ?? 'unnamed'}
-                {item.user_id === myId ? ' (you)' : ''}
-              </Text>
-              {item.late ? <Text style={styles.late}>late</Text> : null}
-            </View>
-            <Text style={styles.score}>
-              {item.status === 'missed'
-                ? 'missed'
-                : item.score === null
-                  ? 'pending'
-                  : item.confidence === 'building'
-                    ? `~${item.score}`
-                    : String(item.score)}
-            </Text>
-          </View>
+          <BoardRowItem item={item} index={index} myId={myId} />
         )}
         ListEmptyComponent={
           <Text style={styles.empty}>No friends yet. Add some.</Text>
         }
       />
     </View>
+  );
+}
+
+function BoardRowItem({
+  item,
+  index,
+  myId,
+}: {
+  item: BoardRow;
+  index: number;
+  myId: string;
+}) {
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 250,
+      delay: index * 45,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [anim, index]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.row,
+        {
+          opacity: anim,
+          transform: [
+            {
+              translateY: anim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [8, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <Text style={styles.rank}>
+        {item.score === null ? '·' : `#${index + 1}`}
+      </Text>
+      <View style={styles.rowMain}>
+        <Text style={styles.handle}>
+          {item.handle ?? 'unnamed'}
+          {item.user_id === myId ? ' (you)' : ''}
+        </Text>
+        {item.late ? <Text style={styles.late}>late</Text> : null}
+      </View>
+      <Text style={styles.score}>
+        {item.status === 'missed'
+          ? 'missed'
+          : item.score === null
+            ? 'pending'
+            : item.confidence === 'building'
+              ? `~${item.score}`
+              : String(item.score)}
+      </Text>
+    </Animated.View>
   );
 }
 
