@@ -18,7 +18,7 @@ import {
   searchHandle,
   sendFriendRequest,
 } from '../../lib/api';
-import { supabase } from '../../lib/supabase';
+import { isConfigured, supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
 import { useFlashStatus } from '../../lib/useFlashStatus';
 import { Badge } from '../../components/Badge';
@@ -94,11 +94,27 @@ export default function Friends() {
       return;
     }
     const { error } = await sendFriendRequest(target.id);
-    if (error) Alert.alert('Could not add', error.message);
-    else {
-      setQuery('');
-      await load();
+    if (error) {
+      Alert.alert('Could not add', error.message);
+      return;
     }
+    setQuery('');
+    if (!isConfigured) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setRows((r) => [
+        ...r,
+        {
+          friendshipId: `demo-${target.id}`,
+          otherId: target.id,
+          handle: target.handle,
+          status: 'pending',
+          incoming: false,
+        },
+      ]);
+      flashStatus('Friend request sent');
+      return;
+    }
+    await load();
   }
 
   return (

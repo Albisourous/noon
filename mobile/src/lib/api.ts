@@ -88,6 +88,10 @@ export async function setHandle(handle: string) {
 }
 
 export async function searchHandle(handle: string): Promise<Profile | null> {
+  if (!isConfigured) {
+    const h = handle.toLowerCase().trim();
+    return h ? { id: 'demo-new', handle: h, tz: '', created_at: '' } : null;
+  }
   const { data } = await supabase
     .from('profiles')
     .select('id, handle')
@@ -97,6 +101,7 @@ export async function searchHandle(handle: string): Promise<Profile | null> {
 }
 
 export async function sendFriendRequest(addresseeId: string) {
+  if (!isConfigured) return { error: null };
   const uid = (await supabase.auth.getUser()).data.user?.id;
   return supabase
     .from('friendships')
