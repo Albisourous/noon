@@ -137,8 +137,13 @@ export default function Friends() {
           onChangeText={setQuery}
         />
         <Pressable
-          style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [
+            styles.addButton,
+            !query.trim() && { opacity: 0.45 },
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={onAdd}
+          disabled={!query.trim()}
         >
           <Text style={styles.addText}>Add</Text>
         </Pressable>
