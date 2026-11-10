@@ -18,6 +18,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
 import { Badge } from '../../components/Badge';
+import { EmptyState } from '../../components/EmptyState';
 import type { Friendship } from '../../lib/types';
 
 interface FriendRow {
@@ -120,7 +121,10 @@ export default function Friends() {
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.empty}>No friends yet.</Text>
+          <EmptyState
+            title="No friends yet"
+            hint="Search a handle above to send your first friend request."
+          />
         }
       />
     </View>
@@ -162,5 +166,4 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   acceptText: { color: colors.text, fontWeight: '700' },
-  empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });

@@ -18,6 +18,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
 import type { BoardRow, SleepSession } from '../../lib/types';
 import { Badge } from '../../components/Badge';
+import { EmptyState } from '../../components/EmptyState';
 
 export default function Board() {
   const [rows, setRows] = useState<BoardRow[]>([]);
@@ -263,7 +264,10 @@ export default function Board() {
         )}
         ListEmptyComponent={
           loaded ? (
-            <Text style={styles.empty}>No friends yet. Add some.</Text>
+            <EmptyState
+              title="No friends yet"
+              hint="Add friends from the Friends tab and their scores will show up here."
+            />
           ) : (
             <SkeletonRows />
           )
@@ -467,5 +471,4 @@ const styles = StyleSheet.create({
     color: colors.muted,
     textDecorationLine: 'line-through',
   },
-  empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });
