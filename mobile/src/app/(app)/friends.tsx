@@ -129,6 +129,7 @@ export default function Friends() {
 
   return (
     <View style={screen}>
+      <Text style={styles.eyebrow}>Your circle</Text>
       <Text style={styles.title}>Friends</Text>
 
       <View style={styles.addRow}>
@@ -265,6 +266,7 @@ function FriendRowItem({
 }
 
 const styles = StyleSheet.create({
+  eyebrow: { ...font.eyebrow, marginBottom: spacing.xs },
   title: { ...font.title, marginBottom: spacing.xl },
   addRow: {
     flexDirection: 'row',
@@ -275,7 +277,7 @@ const styles = StyleSheet.create({
     ...font.body,
     flex: 1,
     backgroundColor: colors.card,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
@@ -283,7 +285,7 @@ const styles = StyleSheet.create({
   inputFocused: { borderColor: colors.accent },
   addButton: {
     backgroundColor: colors.accent,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     paddingHorizontal: spacing.xl,
     justifyContent: 'center',
   },
@@ -297,8 +299,11 @@ const styles = StyleSheet.create({
   shareButton: {
     alignSelf: 'center',
     marginTop: spacing.xl,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
   },
   shareText: { ...font.label },
   row: {
@@ -313,7 +318,7 @@ const styles = StyleSheet.create({
   handle: { ...font.bodyStrong },
   acceptButton: {
     backgroundColor: colors.success,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
