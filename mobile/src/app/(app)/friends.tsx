@@ -149,6 +149,7 @@ export default function Friends() {
         data={rows}
         keyExtractor={(r) => r.friendshipId}
         contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item, index }) => (
           <FriendRowItem
             item={item}

@@ -291,6 +291,7 @@ export default function Board() {
         data={rows}
         keyExtractor={(r) => r.user_id}
         contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
