@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -85,7 +86,16 @@ export default function Profile() {
           styles.signOutCard,
           pressed && { opacity: 0.7 },
         ]}
-        onPress={() => supabase.auth.signOut()}
+        onPress={() =>
+          Alert.alert('Sign out?', undefined, [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Sign Out',
+              style: 'destructive',
+              onPress: () => supabase.auth.signOut(),
+            },
+          ])
+        }
       >
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
