@@ -280,7 +280,7 @@ export default function Board() {
           ]}
           onPress={() =>
             Share.share({
-              message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight.`,
+              message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight — add me: @${myRow.handle ?? ''}`,
             })
           }
         >
