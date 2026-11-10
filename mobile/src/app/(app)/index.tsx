@@ -19,6 +19,7 @@ import { colors, font, radius, screen } from '../../lib/theme';
 import type { BoardRow, SleepSession } from '../../lib/types';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
+import { SkeletonRows } from '../../components/SkeletonRows';
 
 export default function Board() {
   const [rows, setRows] = useState<BoardRow[]>([]);
@@ -402,40 +403,6 @@ function BoardRowItem({
   );
 }
 
-function SkeletonRows() {
-  const pulse = useRef(new Animated.Value(0.35)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0.35,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse]);
-
-  return (
-    <>
-      {[0, 1, 2].map((i) => (
-        <Animated.View
-          key={i}
-          style={[styles.row, styles.skeleton, { opacity: pulse }]}
-        />
-      ))}
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
   date: { color: colors.muted, fontSize: 13 },
   title: { ...font.title, marginBottom: 20 },
@@ -489,7 +456,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.accentSoft,
   },
-  skeleton: { height: 58 },
   rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
   rankFirst: { fontWeight: '900', color: colors.secondary },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },

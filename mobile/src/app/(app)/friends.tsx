@@ -19,6 +19,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
+import { SkeletonRows } from '../../components/SkeletonRows';
 import type { Friendship } from '../../lib/types';
 
 interface FriendRow {
@@ -33,6 +34,7 @@ export default function Friends() {
   const [myId, setMyId] = useState('');
   const [rows, setRows] = useState<FriendRow[]>([]);
   const [query, setQuery] = useState('');
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';
@@ -55,6 +57,7 @@ export default function Friends() {
         };
       }),
     );
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
@@ -121,10 +124,14 @@ export default function Friends() {
           </View>
         )}
         ListEmptyComponent={
-          <EmptyState
-            title="No friends yet"
-            hint="Search a handle above to send your first friend request."
-          />
+          loaded ? (
+            <EmptyState
+              title="No friends yet"
+              hint="Search a handle above to send your first friend request."
+            />
+          ) : (
+            <SkeletonRows />
+          )
         }
       />
     </View>
