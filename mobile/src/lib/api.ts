@@ -104,6 +104,7 @@ export async function sendFriendRequest(addresseeId: string) {
 }
 
 export async function acceptFriendRequest(friendshipId: string) {
+  if (!isConfigured) return { error: null };
   return supabase
     .from('friendships')
     .update({ status: 'accepted' })

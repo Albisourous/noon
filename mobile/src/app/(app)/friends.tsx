@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
+  LayoutAnimation,
   Pressable,
   StyleSheet,
   Text,
@@ -35,6 +36,13 @@ export default function Friends() {
   const [rows, setRows] = useState<FriendRow[]>([]);
   const [query, setQuery] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [status, setStatus] = useState('');
+  const statusTimer = useRef<number | null>(null);
+  const flashStatus = (msg: string) => {
+    setStatus(msg);
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+    statusTimer.current = setTimeout(() => setStatus(''), 5000);
+  };
 
   const load = useCallback(async () => {
     const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';
@@ -63,6 +71,17 @@ export default function Friends() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function acceptRequest(item: FriendRow) {
+    const { error } = await acceptFriendRequest(item.friendshipId);
+    if (error) {
+      flashStatus(error.message);
+      return;
+    }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setRows((r) => r.filter((x) => x.friendshipId !== item.friendshipId));
+    flashStatus('Friend request accepted');
+  }
 
   async function onAdd() {
     const target = await searchHandle(query);
@@ -99,6 +118,7 @@ export default function Friends() {
           <Text style={styles.addText}>Add</Text>
         </Pressable>
       </View>
+      {status ? <Text style={styles.status}>{status}</Text> : null}
 
       <FlatList
         data={rows}
@@ -110,10 +130,7 @@ export default function Friends() {
               item.incoming ? (
                 <Pressable
                   style={styles.acceptButton}
-                  onPress={async () => {
-                    await acceptFriendRequest(item.friendshipId);
-                    await load();
-                  }}
+                  onPress={() => acceptRequest(item)}
                 >
                   <Text style={styles.acceptText}>Accept</Text>
                 </Pressable>
@@ -156,6 +173,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addText: { color: colors.text, fontWeight: '700' },
+  status: { color: colors.secondary, marginBottom: 10, textAlign: 'center' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
