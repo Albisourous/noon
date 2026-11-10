@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from '../../lib/api';
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
@@ -88,6 +89,7 @@ export default function Board() {
 
   async function postCheckIn(payload: SleepSession | 'missed') {
     const result = await checkIn(payload);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (result.status === 'missed') {
       flashStatus(
         result.already_posted
