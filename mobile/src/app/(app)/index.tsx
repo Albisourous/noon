@@ -17,6 +17,7 @@ import { scheduleNoonReminder } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
 import type { BoardRow, SleepSession } from '../../lib/types';
+import { Badge } from '../../components/Badge';
 
 export default function Board() {
   const [rows, setRows] = useState<BoardRow[]>([]);
@@ -306,7 +307,7 @@ function BoardRowItem({
           {item.handle ?? 'unnamed'}
           {item.user_id === myId ? ' (you)' : ''}
         </Text>
-        {item.late ? <Text style={styles.late}>late</Text> : null}
+        {item.late ? <Badge label="late" /> : null}
       </View>
       <Text style={styles.score}>
         {item.status === 'missed'
@@ -366,7 +367,6 @@ const styles = StyleSheet.create({
   rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
-  late: { color: colors.muted, fontSize: 12 },
   score: { color: colors.accent, fontSize: 22, fontWeight: '800' },
   empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });

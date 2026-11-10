@@ -16,6 +16,7 @@ import {
 } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
+import { Badge } from '../../components/Badge';
 import type { Friendship, Profile } from '../../lib/types';
 
 interface FriendRow {
@@ -119,7 +120,7 @@ export default function Friends() {
                   <Text style={styles.acceptText}>Accept</Text>
                 </Pressable>
               ) : (
-                <Text style={styles.pending}>requested</Text>
+                <Badge label="requested" />
               )
             ) : null}
           </View>
@@ -160,7 +161,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
-  pending: { color: colors.muted, fontSize: 13 },
   acceptButton: {
     backgroundColor: colors.success,
     borderRadius: radius.sm,

@@ -7,6 +7,7 @@ export const colors = {
   text: '#ffffff',
   secondary: '#888888',
   muted: '#666666',
+  chip: 'rgba(255,255,255,0.08)',
   success: '#2fbf71',
   danger: '#ff6b6b',
 } as const;
