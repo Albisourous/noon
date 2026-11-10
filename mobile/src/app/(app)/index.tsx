@@ -255,7 +255,7 @@ export default function Board() {
               await load();
               setRefreshing(false);
             }}
-            tintColor="#888"
+            tintColor={colors.accent}
           />
         }
         renderItem={({ item, index }) => (
