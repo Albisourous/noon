@@ -17,6 +17,7 @@ export default function SignIn() {
   const [stage, setStage] = useState<'email' | 'otp'>('email');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [focused, setFocused] = useState('');
 
   async function sendOtp() {
     setBusy(true);
@@ -53,12 +54,15 @@ export default function SignIn() {
       {stage === 'email' ? (
         <View style={styles.form}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, focused === 'email' && styles.inputFocused]}
             placeholder="you@example.com"
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
+            autoFocus
+            onFocus={() => setFocused('email')}
+            onBlur={() => setFocused('')}
             value={email}
             onChangeText={setEmail}
           />
@@ -72,10 +76,13 @@ export default function SignIn() {
         <View style={styles.form}>
           <Text style={styles.hint}>Code sent to {email}</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, focused === 'otp' && styles.inputFocused]}
             placeholder="123456"
             placeholderTextColor={colors.muted}
             keyboardType="number-pad"
+            autoFocus
+            onFocus={() => setFocused('otp')}
+            onBlur={() => setFocused('')}
             value={otp}
             onChangeText={setOtp}
           />
@@ -111,7 +118,10 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
+  inputFocused: { borderColor: colors.accent },
   button: {
     backgroundColor: colors.accent,
     borderRadius: radius.md,
