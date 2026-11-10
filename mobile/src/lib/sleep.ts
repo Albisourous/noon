@@ -1,7 +1,7 @@
 import Healthkit, {
   CategoryValueSleepAnalysis,
 } from '@kingstinct/react-native-healthkit';
-import type { SleepSession, SleepState } from './types';
+import type { SleepState } from './types';
 
 const SLEEP_TYPE = 'HKCategoryTypeIdentifierSleepAnalysis' as const;
 

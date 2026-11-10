@@ -35,7 +35,6 @@ import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
 import { SkeletonRows } from '../../components/SkeletonRows';
 import NightFooter from '../../components/NightFooter';
-import type { Friendship } from '../../lib/types';
 
 interface FriendRow {
   friendshipId: string;

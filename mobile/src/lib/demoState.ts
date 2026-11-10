@@ -11,8 +11,7 @@ type DemoState =
   | 'onboarding'
   | 'otp'
   | 'auth'
-  | 'loading'
-  | 'empty-friends';
+  | 'loading';
 
 const RAW: DemoState = 'default';
 
