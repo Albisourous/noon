@@ -1,4 +1,4 @@
-import { Easing } from 'react-native';
+import { Easing, StyleSheet } from 'react-native';
 import type { TextStyle, ViewStyle } from 'react-native';
 
 export const colors = {
@@ -35,6 +35,7 @@ export const spacing = {
 } as const;
 
 export const layout = {
+  hairline: StyleSheet.hairlineWidth,
   screenTop: 64,
   listBottom: 120,
   rankWidth: 36,

@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import {
   colors,
   font,
+  layout,
   opacity,
   radius,
   screen,
@@ -46,6 +47,7 @@ export default function Profile() {
 
   return (
     <View style={screen}>
+      <Text style={styles.eyebrow}>About you</Text>
       <Text style={styles.title}>Profile</Text>
 
       <View style={styles.card}>
@@ -114,6 +116,7 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
+  eyebrow: { ...font.eyebrow, marginBottom: spacing.xs },
   title: { ...font.title, marginBottom: spacing.xl },
   card: {
     backgroundColor: colors.card,
@@ -129,9 +132,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   separator: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginHorizontal: spacing.xs,
+    height: layout.hairline,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.sm,
   },
   label: { ...font.bodySm, color: colors.secondary },
   row: { flexDirection: 'row', gap: spacing.sm },
@@ -139,7 +142,7 @@ const styles = StyleSheet.create({
     ...font.body,
     flex: 1,
     backgroundColor: colors.bg,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
   inputFocused: { borderColor: colors.accent },
   saveButton: {
     backgroundColor: colors.accent,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     paddingHorizontal: spacing.xl,
     justifyContent: 'center',
   },
