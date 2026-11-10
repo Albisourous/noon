@@ -1,5 +1,6 @@
-import { supabase, isConfigured } from './supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEMO_STATE } from './demoState';
+import { scoreSession } from './scoring';
 import type { SleepSession, BoardRow, Profile, Friendship } from './types';
 
 const DEMO_BOARD: BoardRow[] = [
@@ -21,6 +22,45 @@ const DEMO_BOARD_LONG: BoardRow[] = [
   { user_id: 'f12', handle: 'sam', wake_date: '', score: 84, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: false },
 ];
 
+const FORMULA_VERSION = 1;
+
+// Local-only board state. A check-in is a StoredEntry keyed by wake_date in
+// one JSON map — entries are immutable once written, matching the retired
+// checkin edge function's insert-first semantics (first post for a
+// wake_date wins).
+const CHECKINS_KEY = 'sleeple.checkins.v1';
+const HANDLE_KEY = 'sleeple.handle.v1';
+
+interface StoredEntry {
+  wake_date: string;
+  score: number | null;
+  status: 'scored' | 'missed';
+  confidence: 'solid' | 'building' | null;
+  late: boolean;
+  posted_at: string;
+}
+
+async function readCheckins(): Promise<Record<string, StoredEntry>> {
+  try {
+    const raw = await AsyncStorage.getItem(CHECKINS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, StoredEntry>) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function writeCheckins(checkins: Record<string, StoredEntry>): Promise<void> {
+  await AsyncStorage.setItem(CHECKINS_KEY, JSON.stringify(checkins));
+}
+
+async function readHandle(): Promise<string | null> {
+  return AsyncStorage.getItem(HANDLE_KEY);
+}
+
+// Minimal error shape consumers check (`error.message`), matching the old
+// PostgrestError surface. Local calls never fail, so it's always null.
+type ApiError = { message: string } | null;
+
 export function localDateString(d = new Date()): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -28,140 +68,167 @@ export function localDateString(d = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-export async function checkIn(payload: SleepSession | 'missed') {
-  if (!isConfigured) {
-    const today = localDateString();
-    return payload === 'missed'
-      ? { wake_date: today, score: null, status: 'missed' as const, already_posted: false }
-      : { wake_date: today, score: 87, status: 'scored' as const, already_posted: false };
+// Same as the edge function's localHour — hour in the user's tz.
+function localHour(tz: string): number {
+  return Number(
+    new Date().toLocaleString('en-US', {
+      timeZone: tz,
+      hour: 'numeric',
+      hour12: false,
+    }),
+  );
+}
+
+export async function checkIn(payload: SleepSession | 'missed'): Promise<{
+  wake_date: string;
+  score?: number | null;
+  status?: 'scored' | 'missed';
+  confidence?: 'solid' | 'building' | null;
+  already_posted: boolean;
+}> {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const checkins = await readCheckins();
+  const now = new Date();
+  const late = localHour(tz) >= 13;
+
+  // Missed check-in: no session found on-device. Records an explicit miss
+  // for today's local date rather than leaving the row ambiguously pending.
+  if (payload === 'missed') {
+    const wake_date = now.toLocaleDateString('en-CA', { timeZone: tz });
+    const existing = checkins[wake_date];
+    if (existing) {
+      return {
+        wake_date,
+        score: existing.score,
+        status: existing.status,
+        already_posted: true,
+      };
+    }
+    checkins[wake_date] = {
+      wake_date,
+      score: null,
+      status: 'missed',
+      confidence: null,
+      late,
+      posted_at: now.toISOString(),
+    };
+    await writeCheckins(checkins);
+    return { wake_date, score: null, status: 'missed', already_posted: false };
   }
-  const { data, error } = await supabase.functions.invoke('checkin', {
-    body:
-      payload === 'missed'
-        ? { missed: true, tz: Intl.DateTimeFormat().resolvedOptions().timeZone }
-        : {
-            source: 'healthkit',
-            tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            session: payload,
-          },
+
+  const wake_date = new Date(payload.end).toLocaleDateString('en-CA', {
+    timeZone: tz,
   });
-  if (error) throw error;
-  return data as {
-    wake_date: string;
-    score: number | null;
-    status?: 'scored' | 'missed';
-    already_posted: boolean;
+
+  // Insert-first: an existing entry for this wake_date means the day is
+  // already posted — the entry is locked, return it as-is.
+  const existing = checkins[wake_date];
+  if (existing) {
+    return {
+      wake_date,
+      score: existing.score,
+      status: existing.status,
+      already_posted: true,
+    };
+  }
+
+  const { score, confidence } = scoreSession(payload);
+  checkins[wake_date] = {
+    wake_date,
+    score,
+    status: 'scored',
+    confidence,
+    late,
+    posted_at: now.toISOString(),
+  };
+  await writeCheckins(checkins);
+  return {
+    wake_date,
+    score,
+    status: 'scored',
+    confidence,
+    already_posted: false,
   };
 }
 
 export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
-  if (!isConfigured) {
-    switch (DEMO_STATE) {
-      case 'empty':
-        return [];
-      case 'missed':
-        return DEMO_BOARD.map((r) =>
-          r.user_id === 'me' || r.user_id === 'f3'
-            ? { ...r, score: null, status: 'missed' as const, confidence: null }
-            : r,
-        );
-      case 'long':
-        return DEMO_BOARD_LONG;
-      case 'loading':
-        return new Promise<BoardRow[]>(() => {});
-      default:
-        return DEMO_BOARD;
-    }
+  switch (DEMO_STATE) {
+    case 'empty':
+      return [];
+    case 'missed':
+      return DEMO_BOARD.map((r) =>
+        r.user_id === 'me' || r.user_id === 'f3'
+          ? { ...r, score: null, status: 'missed' as const, confidence: null }
+          : r,
+      );
+    case 'long':
+      return DEMO_BOARD_LONG;
+    case 'loading':
+      return new Promise<BoardRow[]>(() => {});
   }
-  const { data, error } = await supabase.rpc('friend_board', {
-    p_wake_date: wakeDate,
-  });
-  if (error) throw error;
-  return data as BoardRow[];
+  // 'default': my real stored entry for wakeDate (or pending), plus the
+  // fake friends board.
+  const stored = (await readCheckins())[wakeDate];
+  const meRow: BoardRow = {
+    user_id: 'me',
+    handle: (await readHandle()) ?? 'me',
+    wake_date: stored?.wake_date ?? '',
+    score: stored?.score ?? null,
+    status: stored?.status ?? null,
+    confidence: stored?.confidence ?? null,
+    formula_version: FORMULA_VERSION,
+    posted_at: stored?.posted_at ?? '',
+    late: stored?.late ?? false,
+  };
+  return [meRow, ...DEMO_BOARD.filter((r) => r.user_id !== 'me')];
 }
 
 export async function fetchMyProfile(): Promise<Profile | null> {
-  if (!isConfigured) {
-    if (DEMO_STATE === 'loading') return new Promise<Profile | null>(() => {});
-    return {
-      id: 'me',
-      handle: DEMO_STATE === 'onboarding' ? null : 'albin',
-      tz: 'America/New_York',
-      created_at: '',
-    };
-  }
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .single();
-  if (error) return null;
-  return data;
+  if (DEMO_STATE === 'loading') return new Promise<Profile | null>(() => {});
+  return {
+    id: 'me',
+    handle: DEMO_STATE === 'onboarding' ? null : await readHandle(),
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    created_at: '',
+  };
 }
 
 export async function fetchProfiles(ids: string[]): Promise<Profile[]> {
-  if (!isConfigured) {
-    const demoHandles: Record<string, string> = { f1: 'ehsan', f4: 'dana' };
-    return ids.map((id) => ({
-      id,
-      handle: demoHandles[id] ?? id,
-      tz: '',
-      created_at: '',
-    }));
-  }
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, handle')
-    .in('id', ids);
-  return (data as Profile[]) ?? [];
+  const demoHandles: Record<string, string> = { f1: 'ehsan', f4: 'dana' };
+  return ids.map((id) => ({
+    id,
+    handle: demoHandles[id] ?? id,
+    tz: '',
+    created_at: '',
+  }));
 }
 
-export async function setHandle(handle: string) {
-  if (!isConfigured) return { error: null };
-  const { error } = await supabase
-    .from('profiles')
-    .update({ handle: handle.toLowerCase().trim() })
-    .eq('id', (await supabase.auth.getUser()).data.user?.id ?? '');
-  return { error };
+export async function setHandle(handle: string): Promise<{ error: ApiError }> {
+  await AsyncStorage.setItem(HANDLE_KEY, handle.toLowerCase().trim());
+  return { error: null };
 }
 
 export async function searchHandle(handle: string): Promise<Profile | null> {
-  if (!isConfigured) {
-    const h = handle.toLowerCase().trim();
-    return h ? { id: 'demo-new', handle: h, tz: '', created_at: '' } : null;
-  }
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, handle')
-    .eq('handle', handle.toLowerCase().trim())
-    .maybeSingle();
-  return data as Profile | null;
+  const h = handle.toLowerCase().trim();
+  return h ? { id: 'demo-new', handle: h, tz: '', created_at: '' } : null;
 }
 
-export async function sendFriendRequest(addresseeId: string) {
-  if (!isConfigured) return { error: null };
-  const uid = (await supabase.auth.getUser()).data.user?.id;
-  return supabase
-    .from('friendships')
-    .insert({ requester_id: uid, addressee_id: addresseeId });
+export async function sendFriendRequest(
+  addresseeId: string,
+): Promise<{ error: ApiError }> {
+  return { error: null };
 }
 
-export async function acceptFriendRequest(friendshipId: string) {
-  if (!isConfigured) return { error: null };
-  return supabase
-    .from('friendships')
-    .update({ status: 'accepted' })
-    .eq('id', friendshipId);
+export async function acceptFriendRequest(
+  friendshipId: string,
+): Promise<{ error: ApiError }> {
+  return { error: null };
 }
 
 export async function fetchFriendships(): Promise<Friendship[]> {
-  if (!isConfigured) {
-    if (DEMO_STATE === 'empty-friends') return [];
-    return [
-      { id: 'x1', requester_id: 'me', addressee_id: 'f1', status: 'accepted', created_at: '' },
-      { id: 'x2', requester_id: 'f4', addressee_id: 'me', status: 'pending', created_at: '' },
-    ];
-  }
-  const { data, error } = await supabase.from('friendships').select('*');
-  if (error) throw error;
-  return data as Friendship[];
+  if (DEMO_STATE === 'empty-friends') return [];
+  return [
+    { id: 'x1', requester_id: 'me', addressee_id: 'f1', status: 'accepted', created_at: '' },
+    { id: 'x2', requester_id: 'f4', addressee_id: 'me', status: 'pending', created_at: '' },
+  ];
 }

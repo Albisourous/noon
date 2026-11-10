@@ -18,7 +18,6 @@ import {
   searchHandle,
   sendFriendRequest,
 } from '../../lib/api';
-import { isConfigured, supabase } from '../../lib/supabase';
 import {
   colors,
   font,
@@ -55,7 +54,7 @@ export default function Friends() {
   const [myHandle, setMyHandle] = useState('');
 
   const load = useCallback(async () => {
-    const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';
+    const uid = 'me';
     setMyId(uid);
     const friendships = await fetchFriendships();
     const otherIds = friendships.map((f) =>
@@ -110,22 +109,18 @@ export default function Friends() {
       return;
     }
     setQuery('');
-    if (!isConfigured) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets[motion.listChange]);
-      setRows((r) => [
-        ...r,
-        {
-          friendshipId: `demo-${target.id}`,
-          otherId: target.id,
-          handle: target.handle,
-          status: 'pending',
-          incoming: false,
-        },
-      ]);
-      flashStatus('Friend request sent');
-      return;
-    }
-    await load();
+    LayoutAnimation.configureNext(LayoutAnimation.Presets[motion.listChange]);
+    setRows((r) => [
+      ...r,
+      {
+        friendshipId: `demo-${target.id}`,
+        otherId: target.id,
+        handle: target.handle,
+        status: 'pending',
+        incoming: false,
+      },
+    ]);
+    flashStatus('Friend request sent');
   }
 
   return (
