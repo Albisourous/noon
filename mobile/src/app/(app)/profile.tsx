@@ -9,12 +9,13 @@ import {
 import { fetchMyProfile, setHandle } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
+import { useFlashStatus } from '../../lib/useFlashStatus';
 
 export default function Profile() {
   const [handle, setHandleValue] = useState('');
   const [email, setEmail] = useState('');
   const [tz, setTz] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, flashStatus, setStatus] = useFlashStatus();
   const [handleFocused, setHandleFocused] = useState(false);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function Profile() {
   async function saveHandle() {
     setStatus('');
     const { error } = await setHandle(handle);
-    setStatus(error ? error.message : 'Saved.');
+    flashStatus(error ? error.message : 'Saved.');
   }
 
   return (
