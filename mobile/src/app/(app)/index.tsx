@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   FlatList,
   Pressable,
   RefreshControl,
@@ -118,6 +120,50 @@ export default function Board() {
   }
 
   const myRow = rows.find((r) => r.user_id === myId);
+  const checkedScore = myRow?.status === 'scored' ? myRow.score : null;
+
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const scoreAnim = useRef(new Animated.Value(0)).current;
+  const [displayScore, setDisplayScore] = useState<number | null>(null);
+  const revealedFor = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (checkedScore === null) {
+      setDisplayScore(null);
+      return;
+    }
+    if (revealedFor.current === checkedScore) {
+      setDisplayScore(checkedScore);
+      return;
+    }
+    revealedFor.current = checkedScore;
+    scoreAnim.setValue(0);
+    const sub = scoreAnim.addListener(({ value }) =>
+      setDisplayScore(Math.round(value)),
+    );
+    Animated.timing(scoreAnim, {
+      toValue: checkedScore,
+      duration: 600,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => scoreAnim.removeListener(sub));
+    return () => scoreAnim.removeListener(sub);
+  }, [checkedScore, scoreAnim]);
+
+  const onPressIn = () =>
+    Animated.spring(pressScale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      friction: 5,
+      tension: 300,
+    }).start();
+  const onPressOut = () =>
+    Animated.spring(pressScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 5,
+      tension: 300,
+    }).start();
 
   if (needsHandle) {
     return (
@@ -163,21 +209,30 @@ export default function Board() {
       <Text style={styles.date}>{today}</Text>
       <Text style={styles.title}>Today's Board</Text>
 
-      <Pressable
-        style={[styles.checkinButton, busy && styles.checkinDisabled]}
-        onPress={onCheckIn}
-        disabled={busy}
+      <Animated.View
+        style={[
+          { transform: [{ scale: pressScale }] },
+          myRow?.status === 'scored' && styles.checkinGlow,
+        ]}
       >
-        <Text style={styles.checkinText}>
-          {busy
-            ? 'Syncing…'
-            : myRow?.status === 'scored'
-              ? `Checked in — ${myRow.score}`
-              : myRow?.status === 'missed'
-                ? 'Checked in — missed'
-                : 'Check in'}
-        </Text>
-      </Pressable>
+        <Pressable
+          style={[styles.checkinButton, busy && styles.checkinDisabled]}
+          onPress={onCheckIn}
+          disabled={busy}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+        >
+          <Text style={styles.checkinText}>
+            {busy
+              ? 'Syncing…'
+              : myRow?.status === 'scored'
+                ? `Checked in — ${displayScore ?? myRow.score}`
+                : myRow?.status === 'missed'
+                  ? 'Checked in — missed'
+                  : 'Check in'}
+          </Text>
+        </Pressable>
+      </Animated.View>
       {status ? <Text style={styles.status}>{status}</Text> : null}
 
       <FlatList
@@ -236,6 +291,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   checkinDisabled: { opacity: 0.6 },
+  checkinGlow: {
+    borderRadius: radius.lg,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+  },
   checkinText: { color: colors.text, fontSize: 18, fontWeight: '700' },
   status: { color: colors.secondary, textAlign: 'center', marginBottom: 8 },
   onboardHint: {
