@@ -441,7 +441,12 @@ function BoardRowItem({
 }
 
 const styles = StyleSheet.create({
-  date: { color: colors.muted, fontSize: 13 },
+  date: {
+    color: colors.muted,
+    fontSize: 13,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   title: { ...font.title, marginBottom: 20 },
   checkinButton: {
     backgroundColor: colors.accent,
