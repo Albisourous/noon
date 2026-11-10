@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../lib/theme';
+import { font, layout, spacing } from '../lib/theme';
 
 export function EmptyState({ title, hint }: { title: string; hint: string }) {
   return (
@@ -11,14 +11,16 @@ export function EmptyState({ title, hint }: { title: string; hint: string }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', paddingTop: 88, paddingHorizontal: 24 },
-  title: { color: colors.secondary, fontSize: 17, fontWeight: '600' },
+  wrap: {
+    alignItems: 'center',
+    paddingTop: layout.emptyTop,
+    paddingHorizontal: spacing.xl,
+  },
+  title: { ...font.subtitle },
   hint: {
-    color: colors.muted,
-    fontSize: 14,
-    lineHeight: 20,
+    ...font.hint,
     textAlign: 'center',
-    marginTop: 8,
-    maxWidth: 260,
+    marginTop: spacing.sm,
+    maxWidth: layout.hintMaxWidth,
   },
 });

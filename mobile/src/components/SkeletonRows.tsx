@@ -1,22 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
-import { colors, radius } from '../lib/theme';
+import { colors, layout, motion, opacity, radius, spacing } from '../lib/theme';
 
 export function SkeletonRows({ count = 3 }: { count?: number }) {
-  const pulse = useRef(new Animated.Value(0.35)).current;
+  const pulse = useRef(new Animated.Value(opacity.pulseMin)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
+          toValue: motion.breatheLoop.to,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
         }),
         Animated.timing(pulse, {
-          toValue: 0.35,
-          duration: 700,
-          useNativeDriver: true,
+          toValue: motion.breatheLoop.from,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
         }),
       ]),
     );
@@ -37,7 +39,7 @@ const styles = StyleSheet.create({
   row: {
     backgroundColor: colors.card,
     borderRadius: radius.md,
-    marginTop: 8,
-    height: 58,
+    marginTop: spacing.sm,
+    height: layout.skeletonHeight,
   },
 });

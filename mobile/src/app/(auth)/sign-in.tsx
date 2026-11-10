@@ -10,7 +10,14 @@ import {
   View,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { colors, radius } from '../../lib/theme';
+import {
+  colors,
+  font,
+  layout,
+  opacity,
+  radius,
+  spacing,
+} from '../../lib/theme';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -57,7 +64,7 @@ export default function SignIn() {
           <TextInput
             style={[styles.input, focused === 'email' && styles.inputFocused]}
             placeholder="you@example.com"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.secondary}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -71,15 +78,15 @@ export default function SignIn() {
             accessibilityRole="button"
             style={({ pressed }) => [
               styles.button,
-              !email.trim() && { opacity: 0.45 },
-              pressed && { opacity: 0.7 },
+              !email.trim() && { opacity: opacity.disabled },
+              pressed && { opacity: opacity.pressed },
             ]}
             onPress={sendOtp}
             disabled={busy || !email.trim()}
           >
             <View style={styles.buttonInner}>
               {busy ? (
-                <ActivityIndicator color={colors.text} size="small" />
+                <ActivityIndicator color={colors.onAccent} size="small" />
               ) : null}
               <Text style={styles.buttonText}>
                 {busy ? 'Sending…' : 'Send code'}
@@ -93,7 +100,7 @@ export default function SignIn() {
           <TextInput
             style={[styles.input, focused === 'otp' && styles.inputFocused]}
             placeholder="123456"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.secondary}
             keyboardType="number-pad"
             autoFocus
             onFocus={() => setFocused('otp')}
@@ -105,15 +112,15 @@ export default function SignIn() {
             accessibilityRole="button"
             style={({ pressed }) => [
               styles.button,
-              !otp.trim() && { opacity: 0.45 },
-              pressed && { opacity: 0.7 },
+              !otp.trim() && { opacity: opacity.disabled },
+              pressed && { opacity: opacity.pressed },
             ]}
             onPress={verifyOtp}
             disabled={busy || !otp.trim()}
           >
             <View style={styles.buttonInner}>
               {busy ? (
-                <ActivityIndicator color={colors.text} size="small" />
+                <ActivityIndicator color={colors.onAccent} size="small" />
               ) : null}
               <Text style={styles.buttonText}>
                 {busy ? 'Verifying…' : 'Verify'}
@@ -124,7 +131,7 @@ export default function SignIn() {
             accessibilityRole="button"
             style={({ pressed }) => [
               styles.ghostButton,
-              pressed && { opacity: 0.7 },
+              pressed && { opacity: opacity.pressed },
             ]}
             onPress={() => {
               setStage('email');
@@ -148,42 +155,50 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
-  title: { color: colors.text, fontSize: 42, fontWeight: '800' },
-  subtitle: { color: colors.secondary, fontSize: 16, marginTop: 8, marginBottom: 48 },
-  form: { width: '100%', maxWidth: 320 },
-  hint: { color: colors.secondary, marginBottom: 12, textAlign: 'center' },
+  title: { ...font.display },
+  subtitle: {
+    ...font.body,
+    color: colors.secondary,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xxl + spacing.lg,
+  },
+  form: { width: '100%', maxWidth: layout.formMaxWidth },
+  hint: {
+    color: colors.secondary,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
   input: {
+    ...font.body,
     backgroundColor: colors.card,
-    color: colors.text,
-    borderRadius: radius.md,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 12,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   inputFocused: { borderColor: colors.accent },
   button: {
     backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    padding: 16,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     alignItems: 'center',
   },
-  buttonText: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  buttonText: { ...font.button },
   buttonInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: spacing.md,
   },
-  error: { color: colors.danger, marginTop: 16 },
+  error: { color: colors.danger, marginTop: spacing.lg },
   ghostButton: {
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginTop: 4,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginTop: spacing.xs,
   },
-  ghostText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
+  ghostText: { ...font.label },
 });

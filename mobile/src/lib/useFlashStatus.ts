@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from './theme';
 
-export function useFlashStatus(durationMs = 5000) {
+export function useFlashStatus(durationMs = motion.statusTtl) {
   const [status, setStatus] = useState('');
   const timer = useRef<number | null>(null);
 

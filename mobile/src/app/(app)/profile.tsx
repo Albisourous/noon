@@ -9,7 +9,14 @@ import {
 } from 'react-native';
 import { fetchMyProfile, setHandle } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
-import { colors, font, radius, screen } from '../../lib/theme';
+import {
+  colors,
+  font,
+  opacity,
+  radius,
+  screen,
+  spacing,
+} from '../../lib/theme';
 import { useFlashStatus } from '../../lib/useFlashStatus';
 
 export default function Profile() {
@@ -46,7 +53,7 @@ export default function Profile() {
           <TextInput
             style={[styles.input, handleFocused && styles.inputFocused]}
             placeholder="yourhandle"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.secondary}
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="done"
@@ -60,7 +67,7 @@ export default function Profile() {
             accessibilityRole="button"
             style={({ pressed }) => [
               styles.saveButton,
-              pressed && { opacity: 0.7 },
+              pressed && { opacity: opacity.pressed },
             ]}
             onPress={saveHandle}
           >
@@ -87,7 +94,7 @@ export default function Profile() {
         style={({ pressed }) => [
           styles.card,
           styles.signOutCard,
-          pressed && { opacity: 0.7 },
+          pressed && { opacity: opacity.pressed },
         ]}
         onPress={() =>
           Alert.alert('Sign out?', undefined, [
@@ -107,47 +114,50 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...font.title, marginBottom: 24 },
+  title: { ...font.title, marginBottom: spacing.xl },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.md,
-    padding: 12,
-    marginTop: 16,
+    padding: spacing.md,
+    marginTop: spacing.lg,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.sm,
   },
   separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.chip,
-    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: spacing.xs,
   },
-  label: { color: colors.muted, fontSize: 15 },
-  row: { flexDirection: 'row', gap: 8 },
+  label: { ...font.bodySm, color: colors.secondary },
+  row: { flexDirection: 'row', gap: spacing.sm },
   input: {
+    ...font.body,
     flex: 1,
     backgroundColor: colors.bg,
-    color: colors.text,
     borderRadius: radius.sm,
-    padding: 12,
-    fontSize: 16,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   inputFocused: { borderColor: colors.accent },
   saveButton: {
     backgroundColor: colors.accent,
     borderRadius: radius.sm,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.xl,
     justifyContent: 'center',
   },
-  saveText: { color: colors.text, fontWeight: '700' },
-  status: { color: colors.secondary, marginTop: 8, marginLeft: 4 },
-  value: { color: colors.text, fontSize: 15 },
-  signOutCard: { alignItems: 'center', padding: 16 },
-  signOutText: { color: colors.danger, fontWeight: '700', fontSize: 16 },
+  saveText: { ...font.button },
+  status: {
+    color: colors.secondary,
+    marginTop: spacing.sm,
+    marginLeft: spacing.xs,
+  },
+  value: { ...font.bodySm },
+  signOutCard: { alignItems: 'center', padding: spacing.lg },
+  signOutText: { ...font.bodyStrong, color: colors.danger },
 });

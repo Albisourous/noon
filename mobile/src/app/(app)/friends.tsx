@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
-  Easing,
   FlatList,
   LayoutAnimation,
   Share,
@@ -21,7 +20,16 @@ import {
   sendFriendRequest,
 } from '../../lib/api';
 import { isConfigured, supabase } from '../../lib/supabase';
-import { colors, font, radius, screen } from '../../lib/theme';
+import {
+  colors,
+  font,
+  layout,
+  motion,
+  opacity,
+  radius,
+  screen,
+  spacing,
+} from '../../lib/theme';
 import { useFlashStatus } from '../../lib/useFlashStatus';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
@@ -80,7 +88,7 @@ export default function Friends() {
       flashStatus(error.message);
       return;
     }
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets[motion.listChange]);
     setRows((r) => r.filter((x) => x.friendshipId !== item.friendshipId));
     flashStatus('Friend request accepted');
   }
@@ -102,7 +110,7 @@ export default function Friends() {
     }
     setQuery('');
     if (!isConfigured) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets[motion.listChange]);
       setRows((r) => [
         ...r,
         {
@@ -127,7 +135,7 @@ export default function Friends() {
         <TextInput
           style={[styles.input, queryFocused && styles.inputFocused]}
           placeholder="add by handle"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.secondary}
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"
@@ -141,8 +149,8 @@ export default function Friends() {
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.addButton,
-            !query.trim() && { opacity: 0.45 },
-            pressed && { opacity: 0.7 },
+            !query.trim() && { opacity: opacity.disabled },
+            pressed && { opacity: opacity.pressed },
           ]}
           onPress={onAdd}
           disabled={!query.trim()}
@@ -170,7 +178,7 @@ export default function Friends() {
               accessibilityRole="button"
               style={({ pressed }) => [
                 styles.shareButton,
-                pressed && { opacity: 0.7 },
+                pressed && { opacity: opacity.pressed },
               ]}
               onPress={() =>
                 Share.share({
@@ -211,10 +219,10 @@ function FriendRowItem({
   useEffect(() => {
     Animated.timing(anim, {
       toValue: 1,
-      duration: 250,
-      delay: index * 45,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
+      duration: motion.enter.duration,
+      delay: index * motion.enter.stagger,
+      easing: motion.enter.easing,
+      useNativeDriver: motion.enter.useNativeDriver,
     }).start();
   }, [anim, index]);
 
@@ -228,7 +236,7 @@ function FriendRowItem({
             {
               translateY: anim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [8, 0],
+                outputRange: [motion.enter.rise, 0],
               }),
             },
           ],
@@ -242,7 +250,7 @@ function FriendRowItem({
             accessibilityRole="button"
             style={({ pressed }) => [
               styles.acceptButton,
-              pressed && { opacity: 0.7 },
+              pressed && { opacity: opacity.pressed },
             ]}
             onPress={() => onAccept(item)}
           >
@@ -257,50 +265,57 @@ function FriendRowItem({
 }
 
 const styles = StyleSheet.create({
-  title: { ...font.title, marginBottom: 20 },
-  addRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  title: { ...font.title, marginBottom: spacing.xl },
+  addRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
   input: {
+    ...font.body,
     flex: 1,
     backgroundColor: colors.card,
-    color: colors.text,
-    borderRadius: radius.md,
-    padding: 14,
-    fontSize: 16,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   inputFocused: { borderColor: colors.accent },
   addButton: {
     backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    paddingHorizontal: 20,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.xl,
     justifyContent: 'center',
   },
-  addText: { color: colors.text, fontWeight: '700' },
-  status: { color: colors.secondary, marginBottom: 10, textAlign: 'center' },
-  listContent: { paddingBottom: 120 },
+  addText: { ...font.button },
+  status: {
+    color: colors.secondary,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  listContent: { paddingBottom: layout.listBottom },
   shareButton: {
     alignSelf: 'center',
-    marginTop: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
-  shareText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
+  shareText: { ...font.label },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: radius.md,
-    padding: 16,
-    marginTop: 8,
+    padding: spacing.lg,
+    marginTop: spacing.sm,
     justifyContent: 'space-between',
   },
-  handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  handle: { ...font.bodyStrong },
   acceptButton: {
     backgroundColor: colors.success,
     borderRadius: radius.sm,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
-  acceptText: { color: colors.text, fontWeight: '700' },
+  acceptText: { ...font.button },
 });

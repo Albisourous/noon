@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  Easing,
   FlatList,
   Share,
   Pressable,
@@ -17,7 +16,17 @@ import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from 
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
 import { isConfigured, supabase } from '../../lib/supabase';
-import { colors, font, radius, screen } from '../../lib/theme';
+import {
+  colors,
+  font,
+  glow,
+  layout,
+  motion,
+  opacity,
+  radius,
+  screen,
+  spacing,
+} from '../../lib/theme';
 import { useFlashStatus } from '../../lib/useFlashStatus';
 import type { BoardRow, SleepSession } from '../../lib/types';
 import { Badge } from '../../components/Badge';
@@ -169,26 +178,20 @@ export default function Board() {
     );
     Animated.timing(scoreAnim, {
       toValue: checkedScore,
-      duration: 600,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      ...motion.scoreReveal,
     }).start(() => scoreAnim.removeListener(sub));
     return () => scoreAnim.removeListener(sub);
   }, [checkedScore, scoreAnim]);
 
   const onPressIn = () =>
     Animated.spring(pressScale, {
-      toValue: 0.96,
-      useNativeDriver: true,
-      friction: 5,
-      tension: 300,
+      toValue: motion.pressScale,
+      ...motion.pressSpring,
     }).start();
   const onPressOut = () =>
     Animated.spring(pressScale, {
       toValue: 1,
-      useNativeDriver: true,
-      friction: 5,
-      tension: 300,
+      ...motion.pressSpring,
     }).start();
 
   if (needsHandle) {
@@ -202,7 +205,7 @@ export default function Board() {
         <TextInput
           style={[styles.input, handleFocused && styles.inputFocused]}
           placeholder="pick a handle"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.secondary}
           autoCapitalize="none"
           autoCorrect={false}
           autoFocus
@@ -215,8 +218,8 @@ export default function Board() {
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.checkinButton,
-            !handleInput.trim() && { opacity: 0.45 },
-            pressed && { opacity: 0.7 },
+            !handleInput.trim() && { opacity: opacity.disabled },
+            pressed && { opacity: opacity.pressed },
           ]}
           disabled={!handleInput.trim()}
           onPress={async () => {
@@ -261,7 +264,7 @@ export default function Board() {
         >
           <View style={styles.checkinInner}>
             {busy ? (
-              <ActivityIndicator color={colors.text} size="small" />
+              <ActivityIndicator color={colors.onAccent} size="small" />
             ) : null}
             <Text style={styles.checkinText}>
               {busy
@@ -280,7 +283,7 @@ export default function Board() {
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.shareButton,
-            pressed && { opacity: 0.7 },
+            pressed && { opacity: opacity.pressed },
           ]}
           onPress={() =>
             Share.share({
@@ -353,10 +356,10 @@ function BoardRowItem({
   useEffect(() => {
     Animated.timing(anim, {
       toValue: 1,
-      duration: 250,
-      delay: index * 45,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
+      duration: motion.enter.duration,
+      delay: index * motion.enter.stagger,
+      easing: motion.enter.easing,
+      useNativeDriver: motion.enter.useNativeDriver,
     }).start();
   }, [anim, index]);
 
@@ -365,14 +368,16 @@ function BoardRowItem({
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pendingPulse, {
-          toValue: 0.45,
-          duration: 1100,
-          useNativeDriver: true,
+          toValue: motion.breatheLoop.from,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
         }),
         Animated.timing(pendingPulse, {
-          toValue: 1,
-          duration: 1100,
-          useNativeDriver: true,
+          toValue: motion.breatheLoop.to,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
         }),
       ]),
     );
@@ -391,7 +396,7 @@ function BoardRowItem({
             {
               translateY: anim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [8, 0],
+                outputRange: [motion.enter.rise, 0],
               }),
             },
           ],
@@ -414,16 +419,15 @@ function BoardRowItem({
           {item.handle ?? 'unnamed'}
         </Text>
         {isSelf ? <Badge label="you" tone="accent" /> : null}
-        {item.late ? <Badge label="late" /> : null}
+        {item.late ? <Badge label="late" tone="warm" /> : null}
       </View>
       <Animated.Text
         style={[
           styles.score,
-          band === 'normal' && { color: colors.text },
-          band === 'poor' && { color: colors.muted },
-          isPending && { color: colors.muted, opacity: pendingPulse },
+          band === 'excellent' && { color: colors.accentWarm },
+          band === 'poor' && { color: colors.poor },
+          isPending && { color: colors.secondary, opacity: pendingPulse },
           isMissed && styles.missedText,
-          styles.scoreDigits,
         ]}
       >
         {item.status === 'missed' ? (
@@ -444,58 +448,49 @@ function BoardRowItem({
 }
 
 const styles = StyleSheet.create({
-  date: {
-    color: colors.muted,
-    fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  title: { ...font.title, marginBottom: 20 },
+  date: { ...font.eyebrow },
+  title: { ...font.title, marginBottom: spacing.xl },
   checkinButton: {
     backgroundColor: colors.accent,
     borderRadius: radius.lg,
-    padding: 18,
+    padding: spacing.lg,
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
-  checkinDisabled: { opacity: 0.6 },
+  checkinDisabled: { opacity: opacity.busy },
   shareButton: {
     alignSelf: 'center',
-    marginTop: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
-  shareText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
+  shareText: { ...font.label },
   checkinInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: spacing.md,
   },
-  checkinGlow: {
-    borderRadius: radius.lg,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  checkinText: { color: colors.text, fontSize: 18, fontWeight: '700' },
-  status: { color: colors.secondary, textAlign: 'center', marginBottom: 8 },
-  onboardHint: {
+  checkinGlow: { borderRadius: radius.lg, ...glow.accentSoftGlow },
+  checkinText: { ...font.button },
+  status: {
     color: colors.secondary,
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 20,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  onboardHint: {
+    ...font.bodySm,
+    color: colors.secondary,
+    marginBottom: spacing.xl,
   },
   input: {
+    ...font.body,
     backgroundColor: colors.card,
-    color: colors.text,
-    borderRadius: radius.md,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 12,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
   inputFocused: { borderColor: colors.accent },
   row: {
@@ -503,13 +498,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: radius.md,
-    padding: 16,
-    marginTop: 8,
+    padding: spacing.lg,
+    marginTop: spacing.sm,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: colors.border,
   },
-  rowSelf: { borderColor: 'rgba(91,108,255,0.35)' },
+  rowSelf: { borderColor: colors.accentBorder },
   rowFill: {
     position: 'absolute',
     left: 0,
@@ -517,16 +512,24 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.accentSoft,
   },
-  listContent: { paddingBottom: 120 },
-  rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
-  rankFirst: { fontWeight: '900', color: colors.secondary },
-  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
-  score: { color: colors.accent, fontSize: 22, fontWeight: '800' },
-  scoreDigits: { fontVariant: ['tabular-nums'] },
-  tilde: { color: colors.muted, fontSize: 16 },
+  listContent: { paddingBottom: layout.listBottom },
+  rank: {
+    ...font.bodySmStrong,
+    color: colors.secondary,
+    width: layout.rankWidth,
+  },
+  rankFirst: { ...font.bodySmHeavy },
+  rowMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  handle: { ...font.bodyStrong },
+  score: { ...font.score },
+  tilde: { ...font.body, color: colors.secondary },
   missedText: {
-    color: colors.muted,
+    color: colors.poor,
     textDecorationLine: 'line-through',
   },
 });
