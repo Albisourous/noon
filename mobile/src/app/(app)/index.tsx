@@ -285,6 +285,7 @@ function BoardRowItem({
   const anim = useRef(new Animated.Value(0)).current;
   const pendingPulse = useRef(new Animated.Value(1)).current;
   const isPending = item.status !== 'missed' && item.score === null;
+  const isMissed = item.status === 'missed';
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -345,7 +346,9 @@ function BoardRowItem({
         {item.score === null ? '·' : `#${index + 1}`}
       </Text>
       <View style={styles.rowMain}>
-        <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
+        <Text style={[styles.handle, isMissed && styles.missedText]}>
+          {item.handle ?? 'unnamed'}
+        </Text>
         {item.user_id === myId ? <Badge label="you" /> : null}
         {item.late ? <Badge label="late" /> : null}
       </View>
@@ -353,6 +356,7 @@ function BoardRowItem({
         style={[
           styles.score,
           isPending && { color: colors.muted, opacity: pendingPulse },
+          isMissed && styles.missedText,
           styles.scoreDigits,
         ]}
       >
@@ -459,5 +463,9 @@ const styles = StyleSheet.create({
   handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
   score: { color: colors.accent, fontSize: 22, fontWeight: '800' },
   scoreDigits: { fontVariant: ['tabular-nums'] },
+  missedText: {
+    color: colors.muted,
+    textDecorationLine: 'line-through',
+  },
   empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });
