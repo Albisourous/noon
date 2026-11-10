@@ -62,6 +62,23 @@ export async function fetchMyProfile(): Promise<Profile | null> {
   return data;
 }
 
+export async function fetchProfiles(ids: string[]): Promise<Profile[]> {
+  if (!isConfigured) {
+    const demoHandles: Record<string, string> = { f1: 'ehsan', f4: 'dana' };
+    return ids.map((id) => ({
+      id,
+      handle: demoHandles[id] ?? id,
+      tz: '',
+      created_at: '',
+    }));
+  }
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, handle')
+    .in('id', ids);
+  return (data as Profile[]) ?? [];
+}
+
 export async function setHandle(handle: string) {
   const { error } = await supabase
     .from('profiles')

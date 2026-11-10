@@ -11,13 +11,14 @@ import {
 import {
   acceptFriendRequest,
   fetchFriendships,
+  fetchProfiles,
   searchHandle,
   sendFriendRequest,
 } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
 import { Badge } from '../../components/Badge';
-import type { Friendship, Profile } from '../../lib/types';
+import type { Friendship } from '../../lib/types';
 
 interface FriendRow {
   friendshipId: string;
@@ -33,20 +34,13 @@ export default function Friends() {
   const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
-    const uid = (await supabase.auth.getUser()).data.user?.id ?? '';
+    const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';
     setMyId(uid);
     const friendships = await fetchFriendships();
     const otherIds = friendships.map((f) =>
       f.requester_id === uid ? f.addressee_id : f.requester_id,
     );
-    let profiles: Profile[] = [];
-    if (otherIds.length) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, handle')
-        .in('id', otherIds);
-      profiles = (data as Profile[]) ?? [];
-    }
+    const profiles = otherIds.length ? await fetchProfiles(otherIds) : [];
     const byId = new Map(profiles.map((p) => [p.id, p]));
     setRows(
       friendships.map((f) => {
