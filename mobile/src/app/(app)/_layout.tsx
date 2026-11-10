@@ -1,19 +1,25 @@
-import { Tabs } from 'expo-router';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { colors } from '../../lib/theme';
 
 export default function AppLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.card },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: 'Board' }} />
-      <Tabs.Screen name="friends" options={{ title: 'Friends' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-    </Tabs>
+    <NativeTabs tintColor={colors.accent}>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Label>Board</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'moon', selected: 'moon.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="friends">
+        <NativeTabs.Trigger.Label>Friends</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person.2', selected: 'person.2.fill' }}
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
