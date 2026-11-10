@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { fetchMyProfile, setHandle } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
+import { colors, font, radius, screen } from '../../lib/theme';
 
 export default function Profile() {
   const [handle, setHandleValue] = useState('');
@@ -34,7 +35,7 @@ export default function Profile() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={screen}>
       <Text style={styles.title}>Profile</Text>
 
       <Text style={styles.label}>handle</Text>
@@ -42,7 +43,7 @@ export default function Profile() {
         <TextInput
           style={styles.input}
           placeholder="yourhandle"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.muted}
           autoCapitalize="none"
           value={handle}
           onChangeText={setHandleValue}
@@ -67,39 +68,33 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-    paddingTop: 64,
-    paddingHorizontal: 20,
-  },
-  title: { color: '#fff', fontSize: 32, fontWeight: '800', marginBottom: 24 },
-  label: { color: '#666', fontSize: 13, marginTop: 16, marginBottom: 6 },
+  title: { ...font.title, marginBottom: 24 },
+  label: { color: colors.muted, fontSize: 13, marginTop: 16, marginBottom: 6 },
   row: { flexDirection: 'row', gap: 8 },
   input: {
     flex: 1,
-    backgroundColor: '#1a1a24',
-    color: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    color: colors.text,
+    borderRadius: radius.md,
     padding: 14,
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: '#5b6cff',
-    borderRadius: 12,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
-  saveText: { color: '#fff', fontWeight: '700' },
-  status: { color: '#888', marginTop: 8 },
-  value: { color: '#fff', fontSize: 16 },
+  saveText: { color: colors.text, fontWeight: '700' },
+  status: { color: colors.secondary, marginTop: 8 },
+  value: { color: colors.text, fontSize: 16 },
   signOut: {
     marginTop: 48,
-    borderColor: '#ff6b6b',
+    borderColor: colors.danger,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 14,
     alignItems: 'center',
   },
-  signOutText: { color: '#ff6b6b', fontWeight: '700' },
+  signOutText: { color: colors.danger, fontWeight: '700' },
 });

@@ -13,6 +13,7 @@ import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from 
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
+import { colors, font, radius, screen } from '../../lib/theme';
 import type { BoardRow, SleepSession } from '../../lib/types';
 
 export default function Board() {
@@ -53,7 +54,6 @@ export default function Board() {
 
   useEffect(() => {
     load();
-    scheduleNoonReminder();
   }, [load]);
 
   async function postCheckIn(payload: SleepSession | 'missed') {
@@ -121,7 +121,7 @@ export default function Board() {
 
   if (needsHandle) {
     return (
-      <View style={styles.container}>
+      <View style={screen}>
         <Text style={styles.title}>Welcome to Sleeple</Text>
         <Text style={styles.onboardHint}>
           One score a day. Set your handle so friends can find you, then
@@ -130,7 +130,7 @@ export default function Board() {
         <TextInput
           style={styles.input}
           placeholder="pick a handle"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.muted}
           autoCapitalize="none"
           value={handleInput}
           onChangeText={setHandleInput}
@@ -159,7 +159,7 @@ export default function Board() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={screen}>
       <Text style={styles.date}>{today}</Text>
       <Text style={styles.title}>Today's Board</Text>
 
@@ -226,34 +226,28 @@ export default function Board() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-    paddingTop: 64,
-    paddingHorizontal: 20,
-  },
-  date: { color: '#666', fontSize: 13 },
-  title: { color: '#fff', fontSize: 32, fontWeight: '800', marginBottom: 20 },
+  date: { color: colors.muted, fontSize: 13 },
+  title: { ...font.title, marginBottom: 20 },
   checkinButton: {
-    backgroundColor: '#5b6cff',
-    borderRadius: 14,
+    backgroundColor: colors.accent,
+    borderRadius: radius.lg,
     padding: 18,
     alignItems: 'center',
     marginBottom: 8,
   },
   checkinDisabled: { opacity: 0.6 },
-  checkinText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  status: { color: '#888', textAlign: 'center', marginBottom: 8 },
+  checkinText: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  status: { color: colors.secondary, textAlign: 'center', marginBottom: 8 },
   onboardHint: {
-    color: '#888',
+    color: colors.secondary,
     fontSize: 15,
     lineHeight: 22,
     marginBottom: 20,
   },
   input: {
-    backgroundColor: '#1a1a24',
-    color: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    color: colors.text,
+    borderRadius: radius.md,
     padding: 16,
     fontSize: 16,
     marginBottom: 12,
@@ -261,15 +255,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a24',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
     padding: 16,
     marginTop: 8,
   },
-  rank: { color: '#666', width: 36, fontSize: 15, fontWeight: '700' },
+  rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  handle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  late: { color: '#666', fontSize: 12 },
-  score: { color: '#5b6cff', fontSize: 22, fontWeight: '800' },
-  empty: { color: '#666', textAlign: 'center', marginTop: 40 },
+  handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  late: { color: colors.muted, fontSize: 12 },
+  score: { color: colors.accent, fontSize: 22, fontWeight: '800' },
+  empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });

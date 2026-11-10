@@ -1,13 +1,14 @@
 import { Tabs } from 'expo-router';
+import { colors } from '../../lib/theme';
 
 export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: '#0a0a0f', borderTopColor: '#1a1a24' },
-        tabBarActiveTintColor: '#5b6cff',
-        tabBarInactiveTintColor: '#666',
+        tabBarStyle: { backgroundColor: colors.bg, borderTopColor: colors.card },
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.muted,
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Board' }} />

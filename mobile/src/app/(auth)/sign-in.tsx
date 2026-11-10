@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { colors, radius } from '../../lib/theme';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -54,7 +55,7 @@ export default function SignIn() {
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.muted}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -73,7 +74,7 @@ export default function SignIn() {
           <TextInput
             style={styles.input}
             placeholder="123456"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.muted}
             keyboardType="number-pad"
             value={otp}
             onChangeText={setOtp}
@@ -94,29 +95,29 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0f',
+    backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
-  title: { color: '#fff', fontSize: 42, fontWeight: '800' },
-  subtitle: { color: '#888', fontSize: 16, marginTop: 8, marginBottom: 48 },
+  title: { color: colors.text, fontSize: 42, fontWeight: '800' },
+  subtitle: { color: colors.secondary, fontSize: 16, marginTop: 8, marginBottom: 48 },
   form: { width: '100%', maxWidth: 320 },
-  hint: { color: '#888', marginBottom: 12, textAlign: 'center' },
+  hint: { color: colors.secondary, marginBottom: 12, textAlign: 'center' },
   input: {
-    backgroundColor: '#1a1a24',
-    color: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    color: colors.text,
+    borderRadius: radius.md,
     padding: 16,
     fontSize: 16,
     marginBottom: 12,
   },
   button: {
-    backgroundColor: '#5b6cff',
-    borderRadius: 12,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
     padding: 16,
     alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  error: { color: '#ff6b6b', marginTop: 16 },
+  buttonText: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  error: { color: colors.danger, marginTop: 16 },
 });

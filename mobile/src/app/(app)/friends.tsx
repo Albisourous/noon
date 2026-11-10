@@ -15,6 +15,7 @@ import {
   sendFriendRequest,
 } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
+import { colors, font, radius, screen } from '../../lib/theme';
 import type { Friendship, Profile } from '../../lib/types';
 
 interface FriendRow {
@@ -83,14 +84,14 @@ export default function Friends() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={screen}>
       <Text style={styles.title}>Friends</Text>
 
       <View style={styles.addRow}>
         <TextInput
           style={styles.input}
           placeholder="add by handle"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.muted}
           autoCapitalize="none"
           value={query}
           onChangeText={setQuery}
@@ -132,46 +133,40 @@ export default function Friends() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-    paddingTop: 64,
-    paddingHorizontal: 20,
-  },
-  title: { color: '#fff', fontSize: 32, fontWeight: '800', marginBottom: 20 },
+  title: { ...font.title, marginBottom: 20 },
   addRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   input: {
     flex: 1,
-    backgroundColor: '#1a1a24',
-    color: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    color: colors.text,
+    borderRadius: radius.md,
     padding: 14,
     fontSize: 16,
   },
   addButton: {
-    backgroundColor: '#5b6cff',
-    borderRadius: 12,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
-  addText: { color: '#fff', fontWeight: '700' },
+  addText: { color: colors.text, fontWeight: '700' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a24',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
     padding: 16,
     marginTop: 8,
     justifyContent: 'space-between',
   },
-  handle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  pending: { color: '#666', fontSize: 13 },
+  handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  pending: { color: colors.muted, fontSize: 13 },
   acceptButton: {
-    backgroundColor: '#2fbf71',
-    borderRadius: 8,
+    backgroundColor: colors.success,
+    borderRadius: radius.sm,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  acceptText: { color: '#fff', fontWeight: '700' },
-  empty: { color: '#666', textAlign: 'center', marginTop: 40 },
+  acceptText: { color: colors.text, fontWeight: '700' },
+  empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });
