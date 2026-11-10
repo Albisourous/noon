@@ -15,6 +15,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from '../../lib/api';
+import { DEMO_STATE } from '../../lib/demoState';
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
 import { isConfigured, supabase } from '../../lib/supabase';
@@ -49,6 +50,7 @@ export default function Board() {
   const [handleInput, setHandleInput] = useState('');
   const [healthLinked, setHealthLinked] = useState(false);
   const [handleFocused, setHandleFocused] = useState(false);
+  const listRef = useRef<FlatList<BoardRow>>(null);
   const today = localDateString();
   const displayDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -86,6 +88,15 @@ export default function Board() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // dev-only: scroll long board to verify tab-bar minimize
+  useEffect(() => {
+    if (DEMO_STATE !== 'long' || !__DEV__) return;
+    const t = setTimeout(() => {
+      listRef.current?.scrollToOffset({ offset: 600, animated: true });
+    }, 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   async function postCheckIn(payload: SleepSession | 'missed') {
     const result = await checkIn(payload);
@@ -300,6 +311,7 @@ export default function Board() {
       {status ? <Text style={styles.status}>{status}</Text> : null}
 
       <FlatList
+        ref={listRef}
         data={rows}
         keyExtractor={(r) => r.user_id}
         contentContainerStyle={styles.listContent}
