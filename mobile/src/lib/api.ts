@@ -71,7 +71,7 @@ export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
       case 'loading':
         return new Promise<BoardRow[]>(() => {});
       default:
-        return DEMO_BOARD;
+        return [];
     }
   }
   const { data, error } = await supabase.rpc('friend_board', {
@@ -128,10 +128,7 @@ export async function setHandle(handle: string) {
 }
 
 export async function searchHandle(handle: string): Promise<Profile | null> {
-  if (!isConfigured) {
-    const h = handle.toLowerCase().trim();
-    return h ? { id: 'demo-new', handle: h, tz: '', invited: true, created_at: '' } : null;
-  }
+  if (!isConfigured) return null;
   const { data } = await supabase
     .from('profiles')
     .select('id, handle')
@@ -157,13 +154,7 @@ export async function acceptFriendRequest(friendshipId: string) {
 }
 
 export async function fetchFriendships(): Promise<Friendship[]> {
-  if (!isConfigured) {
-    if (DEMO_STATE === 'empty-friends') return [];
-    return [
-      { id: 'x1', requester_id: 'me', addressee_id: 'f1', status: 'accepted', created_at: '' },
-      { id: 'x2', requester_id: 'f4', addressee_id: 'me', status: 'pending', created_at: '' },
-    ];
-  }
+  if (!isConfigured) return [];
   const { data, error } = await supabase.from('friendships').select('*');
   if (error) throw error;
   return data as Friendship[];
