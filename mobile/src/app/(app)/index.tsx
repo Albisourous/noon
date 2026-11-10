@@ -379,13 +379,18 @@ function BoardRowItem({
           styles.scoreDigits,
         ]}
       >
-        {item.status === 'missed'
-          ? 'missed'
-          : item.score === null
-            ? 'pending'
-            : item.confidence === 'building'
-              ? `~${item.score}`
-              : String(item.score)}
+        {item.status === 'missed' ? (
+          'missed'
+        ) : item.score === null ? (
+          'pending'
+        ) : item.confidence === 'building' ? (
+          <>
+            <Text style={styles.tilde}>~</Text>
+            {item.score}
+          </>
+        ) : (
+          String(item.score)
+        )}
       </Animated.Text>
     </Animated.View>
   );
@@ -485,6 +490,7 @@ const styles = StyleSheet.create({
   handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
   score: { color: colors.accent, fontSize: 22, fontWeight: '800' },
   scoreDigits: { fontVariant: ['tabular-nums'] },
+  tilde: { color: colors.muted, fontSize: 16 },
   missedText: {
     color: colors.muted,
     textDecorationLine: 'line-through',
