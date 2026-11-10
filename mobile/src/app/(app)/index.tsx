@@ -5,6 +5,7 @@ import {
   Animated,
   Easing,
   FlatList,
+  Share,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -266,6 +267,18 @@ export default function Board() {
           </View>
         </Pressable>
       </Animated.View>
+      {myRow?.status === 'scored' ? (
+        <Pressable
+          style={styles.shareButton}
+          onPress={() =>
+            Share.share({
+              message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight.`,
+            })
+          }
+        >
+          <Text style={styles.shareText}>Share score</Text>
+        </Pressable>
+      ) : null}
       {status ? <Text style={styles.status}>{status}</Text> : null}
 
       <FlatList
@@ -416,6 +429,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   checkinDisabled: { opacity: 0.6 },
+  shareButton: {
+    alignSelf: 'center',
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  shareText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
   checkinInner: {
     flexDirection: 'row',
     alignItems: 'center',
