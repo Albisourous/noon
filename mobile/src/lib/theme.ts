@@ -4,6 +4,7 @@ export const colors = {
   bg: '#0a0a0f',
   card: '#1a1a24',
   accent: '#5b6cff',
+  accentSoft: 'rgba(91,108,255,0.12)',
   text: '#ffffff',
   secondary: '#888888',
   muted: '#666666',

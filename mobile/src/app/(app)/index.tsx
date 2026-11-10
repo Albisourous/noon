@@ -299,6 +299,14 @@ function BoardRowItem({
         },
       ]}
     >
+      {item.score !== null ? (
+        <View
+          style={[
+            styles.rowFill,
+            { width: `${Math.min(item.score, 100)}%` },
+          ]}
+        />
+      ) : null}
       <Text style={styles.rank}>
         {item.score === null ? '·' : `#${index + 1}`}
       </Text>
@@ -363,6 +371,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 16,
     marginTop: 8,
+    overflow: 'hidden',
+  },
+  rowFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: colors.accentSoft,
   },
   rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
