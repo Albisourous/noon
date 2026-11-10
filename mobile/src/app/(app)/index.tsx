@@ -211,7 +211,10 @@ export default function Board() {
           onChangeText={setHandleInput}
         />
         <Pressable
-          style={styles.checkinButton}
+          style={({ pressed }) => [
+            styles.checkinButton,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={async () => {
             const { error } = await setHandle(handleInput);
             if (error) {
