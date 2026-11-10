@@ -129,6 +129,7 @@ export default function Friends() {
           placeholder="add by handle"
           placeholderTextColor={colors.muted}
           autoCapitalize="none"
+          autoCorrect={false}
           returnKeyType="search"
           onSubmitEditing={onAdd}
           onFocus={() => setQueryFocused(true)}

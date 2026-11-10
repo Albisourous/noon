@@ -48,6 +48,7 @@ export default function Profile() {
             placeholder="yourhandle"
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
+            autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={saveHandle}
             onFocus={() => setHandleFocused(true)}

@@ -204,6 +204,7 @@ export default function Board() {
           placeholder="pick a handle"
           placeholderTextColor={colors.muted}
           autoCapitalize="none"
+          autoCorrect={false}
           autoFocus
           onFocus={() => setHandleFocused(true)}
           onBlur={() => setHandleFocused(false)}
