@@ -30,6 +30,7 @@ export default function Board() {
   const [needsHandle, setNeedsHandle] = useState<boolean | null>(null);
   const [handleInput, setHandleInput] = useState('');
   const [healthLinked, setHealthLinked] = useState(false);
+  const [handleFocused, setHandleFocused] = useState(false);
   const today = localDateString();
   const displayDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -184,10 +185,13 @@ export default function Board() {
           connect Apple Health.
         </Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, handleFocused && styles.inputFocused]}
           placeholder="pick a handle"
           placeholderTextColor={colors.muted}
           autoCapitalize="none"
+          autoFocus
+          onFocus={() => setHandleFocused(true)}
+          onBlur={() => setHandleFocused(false)}
           value={handleInput}
           onChangeText={setHandleInput}
         />
@@ -443,7 +447,10 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
+  inputFocused: { borderColor: colors.accent },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
