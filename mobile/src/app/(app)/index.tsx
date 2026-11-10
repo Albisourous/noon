@@ -30,6 +30,11 @@ export default function Board() {
   const [handleInput, setHandleInput] = useState('');
   const [healthLinked, setHealthLinked] = useState(false);
   const today = localDateString();
+  const displayDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 
   const load = useCallback(async () => {
     try {
@@ -210,7 +215,7 @@ export default function Board() {
 
   return (
     <View style={screen}>
-      <Text style={styles.date}>{today}</Text>
+      <Text style={styles.date}>{displayDate}</Text>
       <Text style={styles.title}>Today's Board</Text>
 
       <Animated.View
