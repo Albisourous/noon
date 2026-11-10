@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { isConfigured, supabase } from '../lib/supabase';
@@ -30,10 +30,19 @@ export default function RootLayout() {
 
   // Demo mode: no backend configured → render the app with mock data.
   if (!isConfigured) {
+    const showAuth = DEMO_STATE === 'otp' || DEMO_STATE === 'auth';
     return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name={DEMO_STATE === 'otp' || DEMO_STATE === 'auth' ? '(auth)' : '(app)'} />
-      </Stack>
+      <>
+        {showAuth ? <Redirect href="/sign-in" /> : null}
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Protected guard={showAuth}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+          <Stack.Protected guard={!showAuth}>
+            <Stack.Screen name="(app)" />
+          </Stack.Protected>
+        </Stack>
+      </>
     );
   }
 
