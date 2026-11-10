@@ -120,6 +120,20 @@ export default function SignIn() {
               </Text>
             </View>
           </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.ghostButton,
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => {
+              setStage('email');
+              setOtp('');
+              setMessage('');
+            }}
+          >
+            <Text style={styles.ghostText}>Use a different email</Text>
+          </Pressable>
         </View>
       )}
 
@@ -165,4 +179,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   error: { color: colors.danger, marginTop: 16 },
+  ghostButton: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  ghostText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
 });
