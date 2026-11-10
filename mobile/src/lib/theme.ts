@@ -12,7 +12,7 @@ export const colors = {
   accent: '#a3a0e8',
   accentSoft: 'rgba(163,160,232,0.14)',
   accentSoftStrong: 'rgba(163,160,232,0.24)',
-  accentBorder: 'rgba(163,160,232,0.45)',
+  accentBorder: 'rgba(163,160,232,0.65)',
   accentWarm: '#f0b86e',
   accentWarmSoft: 'rgba(240,184,110,0.16)',
   poor: '#b98a94',

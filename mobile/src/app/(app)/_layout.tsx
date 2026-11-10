@@ -3,7 +3,15 @@ import { colors } from '../../lib/theme';
 
 export default function AppLayout() {
   return (
-    <NativeTabs tintColor={colors.accent}>
+    <NativeTabs
+      tintColor={colors.accent}
+      iconColor={colors.secondary}
+      labelStyle={{ default: { color: colors.secondary } }}
+      backgroundColor={colors.card}
+      blurEffect="systemChromeMaterialDark"
+      shadowColor={colors.border}
+      disableTransparentOnScrollEdge
+    >
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Board</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'moon', selected: 'moon.fill' }} />

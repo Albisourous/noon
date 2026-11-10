@@ -426,7 +426,8 @@ function BoardRowItem({
           styles.score,
           band === 'excellent' && { color: colors.accentWarm },
           band === 'poor' && { color: colors.poor },
-          isPending && { color: colors.secondary, opacity: pendingPulse },
+          isPending && styles.pending,
+          isPending && { opacity: pendingPulse },
           isMissed && styles.missedText,
         ]}
       >
@@ -462,7 +463,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
   },
   shareText: { ...font.label },
   checkinInner: {
@@ -511,6 +515,8 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     backgroundColor: colors.accentSoft,
+    borderTopRightRadius: radius.md,
+    borderBottomRightRadius: radius.md,
   },
   listContent: { paddingBottom: layout.listBottom },
   rank: {
@@ -527,6 +533,7 @@ const styles = StyleSheet.create({
   },
   handle: { ...font.bodyStrong },
   score: { ...font.score },
+  pending: { ...font.bodySm, color: colors.secondary },
   tilde: { ...font.body, color: colors.secondary },
   missedText: {
     color: colors.poor,
