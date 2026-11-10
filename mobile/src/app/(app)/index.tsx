@@ -14,7 +14,16 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from '../../lib/api';
+import {
+  checkIn,
+  consumePendingInvite,
+  createInvite,
+  fetchBoard,
+  fetchMyProfile,
+  localDateString,
+  redeemInvite,
+  setHandle,
+} from '../../lib/api';
 import { DEMO_STATE } from '../../lib/demoState';
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
@@ -48,6 +57,9 @@ export default function Board() {
   const [refreshing, setRefreshing] = useState(false);
   const [status, flashStatus, setStatus] = useFlashStatus();
   const [needsHandle, setNeedsHandle] = useState<boolean | null>(null);
+  const [invited, setInvited] = useState<boolean | null>(null);
+  const [inviteInput, setInviteInput] = useState('');
+  const [inviteFocused, setInviteFocused] = useState(false);
   const [handleInput, setHandleInput] = useState('');
   const [healthLinked, setHealthLinked] = useState(false);
   const [handleFocused, setHandleFocused] = useState(false);
@@ -61,6 +73,11 @@ export default function Board() {
 
   const load = useCallback(async () => {
     try {
+      const pending = await consumePendingInvite();
+      if (pending) {
+        const { error } = await redeemInvite(pending);
+        if (error) flashStatus(error.message);
+      }
       const [{ data: userData }, board, profile] = await Promise.all([
         supabase.auth.getUser(),
         fetchBoard(today),
@@ -68,6 +85,7 @@ export default function Board() {
       ]);
       setMyId(userData.user?.id ?? profile?.id ?? '');
       setNeedsHandle(profile?.handle == null);
+      setInvited(profile?.invited ?? true);
       setRows(
         [...board].sort((a, b) =>
           a.score === null && b.score === null
@@ -213,6 +231,53 @@ export default function Board() {
       ...motion.pressSpring,
     }).start();
 
+  if (invited === false) {
+    return (
+      <View style={screen}>
+        <SleepCat
+          size={140}
+          style={{ alignSelf: 'center', marginBottom: spacing.lg }}
+        />
+        <Text style={styles.eyebrow}>invite only</Text>
+        <Text style={styles.title}>You&rsquo;re on the list</Text>
+        <Text style={styles.onboardHint}>
+          Sleeple is invite-only for now. Ask a friend for their link, or
+          paste your invite code below.
+        </Text>
+        <TextInput
+          style={[styles.input, inviteFocused && styles.inputFocused]}
+          placeholder="invite code"
+          placeholderTextColor={colors.secondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          onFocus={() => setInviteFocused(true)}
+          onBlur={() => setInviteFocused(false)}
+          value={inviteInput}
+          onChangeText={setInviteInput}
+        />
+        <PressableScale
+          accessibilityRole="button"
+          style={[
+            styles.checkinButton,
+            !inviteInput.trim() && { opacity: opacity.disabled },
+          ]}
+          disabled={!inviteInput.trim()}
+          onPress={async () => {
+            const { error } = await redeemInvite(inviteInput);
+            if (error) {
+              flashStatus(error.message);
+              return;
+            }
+            setInvited(true);
+          }}
+        >
+          <Text style={styles.checkinText}>Redeem invite</Text>
+        </PressableScale>
+        {status ? <Text style={styles.status}>{status}</Text> : null}
+      </View>
+    );
+  }
+
   if (needsHandle) {
     return (
       <View style={screen}>
@@ -305,11 +370,12 @@ export default function Board() {
         <PressableScale
           accessibilityRole="button"
           style={styles.shareButton}
-          onPress={() =>
+          onPress={async () => {
+            const code = await createInvite();
             Share.share({
-              message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight — add me: @${myRow.handle ?? ''}`,
-            })
-          }
+              message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight — join me: sleeple://invite/${code}`,
+            });
+          }}
         >
           <Text style={styles.shareText}>Share score</Text>
         </PressableScale>

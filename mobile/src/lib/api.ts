@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, isConfigured } from './supabase';
 import { DEMO_STATE } from './demoState';
 import type { SleepSession, BoardRow, Profile, Friendship } from './types';
@@ -87,6 +88,7 @@ export async function fetchMyProfile(): Promise<Profile | null> {
       id: 'me',
       handle: DEMO_STATE === 'onboarding' ? null : 'albin',
       tz: 'America/New_York',
+      invited: true,
       created_at: '',
     };
   }
@@ -105,6 +107,7 @@ export async function fetchProfiles(ids: string[]): Promise<Profile[]> {
       id,
       handle: demoHandles[id] ?? id,
       tz: '',
+      invited: true,
       created_at: '',
     }));
   }
@@ -127,7 +130,7 @@ export async function setHandle(handle: string) {
 export async function searchHandle(handle: string): Promise<Profile | null> {
   if (!isConfigured) {
     const h = handle.toLowerCase().trim();
-    return h ? { id: 'demo-new', handle: h, tz: '', created_at: '' } : null;
+    return h ? { id: 'demo-new', handle: h, tz: '', invited: true, created_at: '' } : null;
   }
   const { data } = await supabase
     .from('profiles')
@@ -164,4 +167,36 @@ export async function fetchFriendships(): Promise<Friendship[]> {
   const { data, error } = await supabase.from('friendships').select('*');
   if (error) throw error;
   return data as Friendship[];
+}
+
+const PENDING_INVITE_KEY = 'sleeple.pending_invite';
+
+// Invite codes arrive via the sleeple://invite/<code> deeplink route. They
+// are stored (not redeemed) so a not-yet-signed-in user can finish OTP
+// auth first; the board consumes the code on next load.
+export async function savePendingInvite(code: string): Promise<void> {
+  await AsyncStorage.setItem(PENDING_INVITE_KEY, code.toLowerCase().trim());
+}
+
+export async function consumePendingInvite(): Promise<string | null> {
+  const code = await AsyncStorage.getItem(PENDING_INVITE_KEY);
+  if (code) await AsyncStorage.removeItem(PENDING_INVITE_KEY);
+  return code;
+}
+
+export async function redeemInvite(
+  code: string,
+): Promise<{ error: { message: string } | null }> {
+  if (!isConfigured) return { error: null };
+  const { error } = await supabase.rpc('redeem_invite', {
+    p_code: code.toLowerCase().trim(),
+  });
+  return { error };
+}
+
+export async function createInvite(): Promise<string | null> {
+  if (!isConfigured) return 'demo-invite';
+  const { data, error } = await supabase.rpc('create_invite');
+  if (error) return null;
+  return data as string;
 }

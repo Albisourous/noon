@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import {
   acceptFriendRequest,
+  createInvite,
   fetchFriendships,
-  fetchMyProfile,
   fetchProfiles,
   searchHandle,
   sendFriendRequest,
@@ -52,7 +52,6 @@ export default function Friends() {
   const [queryFocused, setQueryFocused] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [status, flashStatus] = useFlashStatus();
-  const [myHandle, setMyHandle] = useState('');
 
   const load = useCallback(async () => {
     const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';
@@ -76,7 +75,6 @@ export default function Friends() {
       }),
     );
     setLoaded(true);
-    fetchMyProfile().then((p) => setMyHandle(p?.handle ?? ''));
   }, []);
 
   useEffect(() => {
@@ -176,19 +174,22 @@ export default function Friends() {
         ListFooterComponent={
           loaded ? (
             <>
-              {myHandle ? (
-                <PressableScale
-                  accessibilityRole="button"
-                  style={styles.shareButton}
-                  onPress={() =>
-                    Share.share({
-                      message: `Add me on Sleeple: @${myHandle}`,
-                    })
+              <PressableScale
+                accessibilityRole="button"
+                style={styles.shareButton}
+                onPress={async () => {
+                  const code = await createInvite();
+                  if (!code) {
+                    flashStatus('Invites unlock after you redeem yours');
+                    return;
                   }
-                >
-                  <Text style={styles.shareText}>Invite friends</Text>
-                </PressableScale>
-              ) : null}
+                  Share.share({
+                    message: `Join my board on Sleeple — daily sleep scores with friends: sleeple://invite/${code}`,
+                  });
+                }}
+              >
+                <Text style={styles.shareText}>Invite friends</Text>
+              </PressableScale>
               <NightFooter />
             </>
           ) : undefined
