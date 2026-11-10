@@ -138,6 +138,7 @@ export default function Friends() {
           onChangeText={setQuery}
         />
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.addButton,
             !query.trim() && { opacity: 0.45 },
@@ -166,6 +167,7 @@ export default function Friends() {
         ListFooterComponent={
           myHandle ? (
             <Pressable
+              accessibilityRole="button"
               style={({ pressed }) => [
                 styles.shareButton,
                 pressed && { opacity: 0.7 },
@@ -237,6 +239,7 @@ function FriendRowItem({
       {item.status === 'pending' ? (
         item.incoming ? (
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.acceptButton,
               pressed && { opacity: 0.7 },

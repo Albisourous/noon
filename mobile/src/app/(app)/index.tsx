@@ -212,6 +212,7 @@ export default function Board() {
           onChangeText={setHandleInput}
         />
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.checkinButton,
             !handleInput.trim() && { opacity: 0.45 },
@@ -251,6 +252,7 @@ export default function Board() {
         ]}
       >
         <Pressable
+          accessibilityRole="button"
           style={[styles.checkinButton, busy && styles.checkinDisabled]}
           onPress={onCheckIn}
           disabled={busy}
@@ -275,6 +277,7 @@ export default function Board() {
       </Animated.View>
       {myRow?.status === 'scored' ? (
         <Pressable
+          accessibilityRole="button"
           style={({ pressed }) => [
             styles.shareButton,
             pressed && { opacity: 0.7 },

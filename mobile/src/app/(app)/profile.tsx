@@ -57,6 +57,7 @@ export default function Profile() {
             onChangeText={setHandleValue}
           />
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.saveButton,
               pressed && { opacity: 0.7 },
@@ -82,6 +83,7 @@ export default function Profile() {
       </View>
 
       <Pressable
+        accessibilityRole="button"
         style={({ pressed }) => [
           styles.card,
           styles.signOutCard,

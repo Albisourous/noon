@@ -68,6 +68,7 @@ export default function SignIn() {
             onChangeText={setEmail}
           />
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.button,
               !email.trim() && { opacity: 0.45 },
@@ -101,6 +102,7 @@ export default function SignIn() {
             onChangeText={setOtp}
           />
           <Pressable
+            accessibilityRole="button"
             style={({ pressed }) => [
               styles.button,
               !otp.trim() && { opacity: 0.45 },
