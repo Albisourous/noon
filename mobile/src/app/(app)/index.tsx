@@ -345,6 +345,8 @@ function BoardRowItem({
 }) {
   const anim = useRef(new Animated.Value(0)).current;
   const pendingPulse = useRef(new Animated.Value(1)).current;
+  const rankPulse = useRef(new Animated.Value(0)).current;
+  const prevIndex = useRef<number | null>(null);
   const isPending = item.status !== 'missed' && item.score === null;
   const isMissed = item.status === 'missed';
   const isSelf = item.user_id === myId;
@@ -366,6 +368,30 @@ function BoardRowItem({
       useNativeDriver: motion.enter.useNativeDriver,
     }).start();
   }, [anim, index]);
+
+  useEffect(() => {
+    if (prevIndex.current === null) {
+      prevIndex.current = index;
+      return;
+    }
+    if (prevIndex.current === index) return;
+    prevIndex.current = index;
+    rankPulse.setValue(0);
+    Animated.sequence([
+      Animated.timing(rankPulse, {
+        toValue: 1,
+        duration: motion.rankPulse.in,
+        easing: motion.enter.easing,
+        useNativeDriver: motion.rankPulse.useNativeDriver,
+      }),
+      Animated.timing(rankPulse, {
+        toValue: 0,
+        duration: motion.rankPulse.out,
+        easing: motion.enter.easing,
+        useNativeDriver: motion.rankPulse.useNativeDriver,
+      }),
+    ]).start();
+  }, [index, rankPulse]);
 
   useEffect(() => {
     if (!isPending) return;
@@ -401,6 +427,12 @@ function BoardRowItem({
               translateY: anim.interpolate({
                 inputRange: [0, 1],
                 outputRange: [motion.enter.rise, 0],
+              }),
+            },
+            {
+              scale: rankPulse.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, motion.rankPulse.scale],
               }),
             },
           ],

@@ -85,6 +85,12 @@ export const motion = {
     easing: Easing.out(Easing.cubic),
     useNativeDriver: false,
   },
+  rankPulse: {
+    in: 150,
+    out: 250,
+    scale: 0.985,
+    useNativeDriver: true,
+  },
   listChange: 'easeInEaseOut',
   statusTtl: 5000,
 } as const;
