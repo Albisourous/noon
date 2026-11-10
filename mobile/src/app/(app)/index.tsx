@@ -203,6 +203,7 @@ export default function Board() {
   if (needsHandle) {
     return (
       <View style={screen}>
+        <Text style={styles.eyebrow}>getting started</Text>
         <Text style={styles.title}>Welcome to Sleeple</Text>
         <Text style={styles.onboardHint}>
           One score a day. Set your handle so friends can find you, then
@@ -220,12 +221,11 @@ export default function Board() {
           value={handleInput}
           onChangeText={setHandleInput}
         />
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
-          style={({ pressed }) => [
+          style={[
             styles.checkinButton,
             !handleInput.trim() && { opacity: opacity.disabled },
-            pressed && { opacity: opacity.pressed },
           ]}
           disabled={!handleInput.trim()}
           onPress={async () => {
@@ -243,7 +243,7 @@ export default function Board() {
           <Text style={styles.checkinText}>
             {healthLinked ? 'Connected — continue' : 'Save & connect Health'}
           </Text>
-        </Pressable>
+        </PressableScale>
         {status ? <Text style={styles.status}>{status}</Text> : null}
       </View>
     );
@@ -465,6 +465,7 @@ function BoardRowItem({
 
 const styles = StyleSheet.create({
   date: { ...font.eyebrow },
+  eyebrow: { ...font.eyebrow, marginBottom: spacing.xs },
   title: { ...font.title, marginBottom: spacing.xl },
   checkinButton: {
     backgroundColor: colors.accent,
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
   input: {
     ...font.body,
     backgroundColor: colors.card,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,

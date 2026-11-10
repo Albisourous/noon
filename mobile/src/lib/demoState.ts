@@ -14,7 +14,7 @@ type DemoState =
   | 'loading'
   | 'empty-friends';
 
-const RAW: DemoState = 'default';
+const RAW: DemoState = 'onboarding';
 
 export const DEMO_STATE: DemoState = __DEV__
   ? ((process.env.EXPO_PUBLIC_DEMO_STATE as DemoState | undefined) ?? RAW)
