@@ -3,12 +3,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import PressableScale from '../../components/PressableScale';
 import { supabase } from '../../lib/supabase';
 import {
   colors,
@@ -74,12 +74,11 @@ export default function SignIn() {
             value={email}
             onChangeText={setEmail}
           />
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
-            style={({ pressed }) => [
+            style={[
               styles.button,
               !email.trim() && { opacity: opacity.disabled },
-              pressed && { opacity: opacity.pressed },
             ]}
             onPress={sendOtp}
             disabled={busy || !email.trim()}
@@ -92,7 +91,7 @@ export default function SignIn() {
                 {busy ? 'Sending…' : 'Send code'}
               </Text>
             </View>
-          </Pressable>
+          </PressableScale>
         </View>
       ) : (
         <View style={styles.form}>
@@ -108,12 +107,11 @@ export default function SignIn() {
             value={otp}
             onChangeText={setOtp}
           />
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
-            style={({ pressed }) => [
+            style={[
               styles.button,
               !otp.trim() && { opacity: opacity.disabled },
-              pressed && { opacity: opacity.pressed },
             ]}
             onPress={verifyOtp}
             disabled={busy || !otp.trim()}
@@ -126,13 +124,10 @@ export default function SignIn() {
                 {busy ? 'Verifying…' : 'Verify'}
               </Text>
             </View>
-          </Pressable>
-          <Pressable
+          </PressableScale>
+          <PressableScale
             accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.ghostButton,
-              pressed && { opacity: opacity.pressed },
-            ]}
+            style={styles.ghostButton}
             onPress={() => {
               setStage('email');
               setOtp('');
@@ -140,7 +135,7 @@ export default function SignIn() {
             }}
           >
             <Text style={styles.ghostText}>Use a different email</Text>
-          </Pressable>
+          </PressableScale>
         </View>
       )}
 

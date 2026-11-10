@@ -46,6 +46,7 @@ export const layout = {
   badgePadX: 10,
   badgePadY: 4,
   scoreBarHeight: 6,
+  voidDotSize: 6,
 } as const;
 
 export const opacity = {

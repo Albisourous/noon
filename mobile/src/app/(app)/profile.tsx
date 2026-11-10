@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react';
 import {
   Alert,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import PressableScale from '../../components/PressableScale';
 import { fetchMyProfile, setHandle } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 import {
   colors,
   font,
   layout,
-  opacity,
   radius,
   screen,
   spacing,
@@ -65,16 +64,13 @@ export default function Profile() {
             value={handle}
             onChangeText={setHandleValue}
           />
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.saveButton,
-              pressed && { opacity: opacity.pressed },
-            ]}
+            style={styles.saveButton}
             onPress={saveHandle}
           >
             <Text style={styles.saveText}>Save</Text>
-          </Pressable>
+          </PressableScale>
         </View>
       </View>
       {status ? <Text style={styles.status}>{status}</Text> : null}
@@ -91,13 +87,9 @@ export default function Profile() {
         </View>
       </View>
 
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
-        style={({ pressed }) => [
-          styles.card,
-          styles.signOutCard,
-          pressed && { opacity: opacity.pressed },
-        ]}
+        style={[styles.card, styles.signOutCard]}
         onPress={() =>
           Alert.alert('Sign out?', undefined, [
             { text: 'Cancel', style: 'cancel' },
@@ -110,7 +102,7 @@ export default function Profile() {
         }
       >
         <Text style={styles.signOutText}>Sign Out</Text>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }

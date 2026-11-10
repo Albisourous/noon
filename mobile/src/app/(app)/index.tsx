@@ -31,6 +31,7 @@ import { useFlashStatus } from '../../lib/useFlashStatus';
 import type { BoardRow, SleepSession } from '../../lib/types';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
+import PressableScale from '../../components/PressableScale';
 import { SkeletonRows } from '../../components/SkeletonRows';
 
 export default function Board() {
@@ -279,12 +280,9 @@ export default function Board() {
         </Pressable>
       </Animated.View>
       {myRow?.status === 'scored' ? (
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.shareButton,
-            pressed && { opacity: opacity.pressed },
-          ]}
+          style={styles.shareButton}
           onPress={() =>
             Share.share({
               message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight — add me: @${myRow.handle ?? ''}`,
@@ -292,7 +290,7 @@ export default function Board() {
           }
         >
           <Text style={styles.shareText}>Share score</Text>
-        </Pressable>
+        </PressableScale>
       ) : null}
       {status ? <Text style={styles.status}>{status}</Text> : null}
 
@@ -315,6 +313,7 @@ export default function Board() {
         renderItem={({ item, index }) => (
           <BoardRowItem item={item} index={index} myId={myId} />
         )}
+        ListFooterComponent={loaded ? <NightFooter /> : undefined}
         ListEmptyComponent={
           loaded ? (
             <EmptyState
@@ -448,6 +447,38 @@ function BoardRowItem({
   );
 }
 
+function NightFooter() {
+  const breathe = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, {
+          toValue: motion.breatheLoop.from,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
+        }),
+        Animated.timing(breathe, {
+          toValue: motion.breatheLoop.to,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [breathe]);
+
+  return (
+    <View style={styles.nightFooter}>
+      <Animated.View style={[styles.nightDot, { opacity: breathe }]} />
+      <Text style={styles.nightCaption}>the night is young</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   date: { ...font.eyebrow },
   title: { ...font.title, marginBottom: spacing.xl },
@@ -519,6 +550,18 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.md,
   },
   listContent: { paddingBottom: layout.listBottom },
+  nightFooter: {
+    marginTop: spacing.xxl,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  nightDot: {
+    width: layout.voidDotSize,
+    height: layout.voidDotSize,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+  },
+  nightCaption: { ...font.caption },
   rank: {
     ...font.bodySmStrong,
     color: colors.secondary,

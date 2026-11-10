@@ -5,7 +5,6 @@ import {
   FlatList,
   LayoutAnimation,
   Share,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -31,6 +30,7 @@ import {
   spacing,
 } from '../../lib/theme';
 import { useFlashStatus } from '../../lib/useFlashStatus';
+import PressableScale from '../../components/PressableScale';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
 import { SkeletonRows } from '../../components/SkeletonRows';
@@ -146,18 +146,17 @@ export default function Friends() {
           value={query}
           onChangeText={setQuery}
         />
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
-          style={({ pressed }) => [
+          style={[
             styles.addButton,
             !query.trim() && { opacity: opacity.disabled },
-            pressed && { opacity: opacity.pressed },
           ]}
           onPress={onAdd}
           disabled={!query.trim()}
         >
           <Text style={styles.addText}>Add</Text>
-        </Pressable>
+        </PressableScale>
       </View>
       {status ? <Text style={styles.status}>{status}</Text> : null}
 
@@ -175,12 +174,9 @@ export default function Friends() {
         )}
         ListFooterComponent={
           myHandle ? (
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.shareButton,
-                pressed && { opacity: opacity.pressed },
-              ]}
+              style={styles.shareButton}
               onPress={() =>
                 Share.share({
                   message: `Add me on Sleeple: @${myHandle}`,
@@ -188,7 +184,7 @@ export default function Friends() {
               }
             >
               <Text style={styles.shareText}>Invite friends</Text>
-            </Pressable>
+            </PressableScale>
           ) : undefined
         }
         ListEmptyComponent={
@@ -247,16 +243,13 @@ function FriendRowItem({
       <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
       {item.status === 'pending' ? (
         item.incoming ? (
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.acceptButton,
-              pressed && { opacity: opacity.pressed },
-            ]}
+            style={styles.acceptButton}
             onPress={() => onAccept(item)}
           >
             <Text style={styles.acceptText}>Accept</Text>
-          </Pressable>
+          </PressableScale>
         ) : (
           <Badge label="requested" />
         )
