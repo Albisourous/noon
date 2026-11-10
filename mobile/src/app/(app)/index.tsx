@@ -409,7 +409,7 @@ function BoardRowItem({
         <Text style={[styles.handle, isMissed && styles.missedText]}>
           {item.handle ?? 'unnamed'}
         </Text>
-        {isSelf ? <Badge label="you" /> : null}
+        {isSelf ? <Badge label="you" tone="accent" /> : null}
         {item.late ? <Badge label="late" /> : null}
       </View>
       <Animated.Text
