@@ -21,6 +21,7 @@ import { Badge } from '../../components/Badge';
 
 export default function Board() {
   const [rows, setRows] = useState<BoardRow[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [myId, setMyId] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,6 +53,8 @@ export default function Board() {
       );
     } catch (e) {
       setStatus(String(e));
+    } finally {
+      setLoaded(true);
     }
   }, [today]);
 
@@ -254,7 +257,11 @@ export default function Board() {
           <BoardRowItem item={item} index={index} myId={myId} />
         )}
         ListEmptyComponent={
-          <Text style={styles.empty}>No friends yet. Add some.</Text>
+          loaded ? (
+            <Text style={styles.empty}>No friends yet. Add some.</Text>
+          ) : (
+            <SkeletonRows />
+          )
         }
       />
     </View>
@@ -330,6 +337,40 @@ function BoardRowItem({
   );
 }
 
+function SkeletonRows() {
+  const pulse = useRef(new Animated.Value(0.35)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0.35,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <Animated.View
+          key={i}
+          style={[styles.row, styles.skeleton, { opacity: pulse }]}
+        />
+      ))}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   date: { color: colors.muted, fontSize: 13 },
   title: { ...font.title, marginBottom: 20 },
@@ -380,6 +421,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.accentSoft,
   },
+  skeleton: { height: 58 },
   rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
