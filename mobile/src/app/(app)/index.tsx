@@ -213,8 +213,10 @@ export default function Board() {
         <Pressable
           style={({ pressed }) => [
             styles.checkinButton,
+            !handleInput.trim() && { opacity: 0.45 },
             pressed && { opacity: 0.7 },
           ]}
+          disabled={!handleInput.trim()}
           onPress={async () => {
             const { error } = await setHandle(handleInput);
             if (error) {
