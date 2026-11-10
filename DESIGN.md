@@ -15,7 +15,7 @@ sync last night's sleep, get a score, see how your friends did.
 | Scoring | Absolute targets, computed by us | Apple Health emits raw stages, NOT a score. Personalized targets = future `formula_version` upgrade |
 | Freeze | Score locked at check-in | Late device revisions update raw storage, not the locked entry |
 | Check-in policy | Forgiving — post anytime, marked late | Streaks deferred post-MVP |
-| Backend | None — local-only for now (AsyncStorage + on-device scoring); backend deferred | Scoring happens on-device; friends data is placeholder demo. A real backend can adopt the tables sketch below later |
+| Backend | Supabase (Postgres + Auth + Edge Functions) | Fast to ship, real SQL, scales fine at this size |
 | Notifications | iOS local notifications | Free, no APNs needed for v1 |
 
 ## Score formula v1 (`formula_version = 1`)
@@ -39,12 +39,12 @@ All inputs derivable from `HKCategoryTypeIdentifier.sleepAnalysis` samples.
 iPhone (Expo)
   ├─ HealthKit read (react-native-healthkit)
   ├─ Local notification @ 12:00 user-local
-  └─ On open: normalize sleep samples → score + persist locally
-                                                              │
-On-device (AsyncStorage) — backend deferred                    ▼
-  ├─ Local store: sleep nights + locked score entries (self)
-  ├─ Scoring: ingest → compute score → lock entry (on-device)
-  └─ Board: friends scores are placeholder demo data until backend lands
+  └─ On open: normalize sleep samples → POST /sleep-night
+                                        │
+Supabase                                ▼
+  ├─ Postgres: users, friendships, sleep_nights, board_entries
+  ├─ Edge Function: ingest → upsert raw → compute score → lock entry
+  └─ Board query: scores for (me ∪ friends) on my wake-date
 ```
 
 ### Tables (sketch)

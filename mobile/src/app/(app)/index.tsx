@@ -18,6 +18,7 @@ import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from 
 import { DEMO_STATE } from '../../lib/demoState';
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
+import { isConfigured, supabase } from '../../lib/supabase';
 import {
   colors,
   font,
@@ -60,11 +61,12 @@ export default function Board() {
 
   const load = useCallback(async () => {
     try {
-      const [board, profile] = await Promise.all([
+      const [{ data: userData }, board, profile] = await Promise.all([
+        supabase.auth.getUser(),
         fetchBoard(today),
         fetchMyProfile(),
       ]);
-      setMyId(profile?.id ?? '');
+      setMyId(userData.user?.id ?? profile?.id ?? '');
       setNeedsHandle(profile?.handle == null);
       setRows(
         [...board].sort((a, b) =>
@@ -121,7 +123,7 @@ export default function Board() {
     setBusy(true);
     setStatus('');
     try {
-      if (DEMO_STATE !== 'default') {
+      if (!isConfigured) {
         await postCheckIn({
           start: '',
           end: '',

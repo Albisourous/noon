@@ -36,9 +36,8 @@ nocturnal, rewarding.
 - No new dependencies without writing justification in the commit message.
   Prefer built-in `Animated`, `expo-*` modules already installed, and
   `react-native-reanimated` ONLY if already in package.json — check first.
-- Demo mode must keep working: app renders with the `DEMO_STATE` /
-  `__DEV__` demo fixtures in `mobile/src/lib/demoState.ts`. There is no
-  backend — never gate the board on one.
+- Demo mode must keep working: app renders with mock data when
+  `EXPO_PUBLIC_SUPABASE_*` is unset. Never gate the board on a backend.
 - Keep the codebase minimal: every abstraction must have ≥2 call sites.
   No "utils for later".
 - Match existing style: dark `#0a0a0f` bg, `#1a1a24` cards, `#5b6cff`
@@ -84,7 +83,7 @@ nocturnal, rewarding.
 - No new screens or features — polish what exists (Board, Friends,
   Profile, sign-in, onboarding card).
 - No README/docs churn, no comment noise, no renaming for taste.
-- Do not touch `DESIGN.md` or this file.
+- Do not touch `supabase/`, `DESIGN.md`, or this file.
 
 ## Done means
 

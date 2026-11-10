@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -7,9 +8,11 @@ import {
 } from 'react-native';
 import PressableScale from '../../components/PressableScale';
 import { fetchMyProfile, setHandle } from '../../lib/api';
+import { supabase } from '../../lib/supabase';
 import {
   colors,
   font,
+  layout,
   radius,
   screen,
   spacing,
@@ -18,15 +21,20 @@ import { useFlashStatus } from '../../lib/useFlashStatus';
 
 export default function Profile() {
   const [handle, setHandleValue] = useState('');
+  const [email, setEmail] = useState('');
   const [tz, setTz] = useState('');
   const [status, flashStatus, setStatus] = useFlashStatus();
   const [handleFocused, setHandleFocused] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const profile = await fetchMyProfile();
+      const [profile, user] = await Promise.all([
+        fetchMyProfile(),
+        supabase.auth.getUser(),
+      ]);
       setHandleValue(profile?.handle ?? '');
       setTz(profile?.tz ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
+      setEmail(user.data.user?.email ?? '');
     })();
   }, []);
 
@@ -69,10 +77,32 @@ export default function Profile() {
 
       <View style={styles.card}>
         <View style={styles.infoRow}>
+          <Text style={styles.label}>email</Text>
+          <Text style={styles.value}>{email || '—'}</Text>
+        </View>
+        <View style={styles.separator} />
+        <View style={styles.infoRow}>
           <Text style={styles.label}>timezone</Text>
           <Text style={styles.value}>{tz}</Text>
         </View>
       </View>
+
+      <PressableScale
+        accessibilityRole="button"
+        style={[styles.card, styles.signOutCard]}
+        onPress={() =>
+          Alert.alert('Sign out?', undefined, [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Sign Out',
+              style: 'destructive',
+              onPress: () => supabase.auth.signOut(),
+            },
+          ])
+        }
+      >
+        <Text style={styles.signOutText}>Sign Out</Text>
+      </PressableScale>
     </View>
   );
 }
@@ -92,6 +122,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.xs,
     paddingVertical: spacing.sm,
+  },
+  separator: {
+    height: layout.hairline,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.sm,
   },
   label: { ...font.bodySm, color: colors.secondary },
   row: { flexDirection: 'row', gap: spacing.sm },
@@ -119,4 +154,6 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
   value: { ...font.bodySm },
+  signOutCard: { alignItems: 'center', padding: spacing.lg },
+  signOutText: { ...font.bodyStrong, color: colors.danger },
 });
