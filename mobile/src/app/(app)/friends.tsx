@@ -286,6 +286,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: radius.md,
     paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
     justifyContent: 'center',
   },
   addText: { ...font.button },
