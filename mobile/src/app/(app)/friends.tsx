@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   FlatList,
   LayoutAnimation,
   Share,
@@ -144,22 +146,12 @@ export default function Friends() {
         data={rows}
         keyExtractor={(r) => r.friendshipId}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
-            {item.status === 'pending' ? (
-              item.incoming ? (
-                <Pressable
-                  style={styles.acceptButton}
-                  onPress={() => acceptRequest(item)}
-                >
-                  <Text style={styles.acceptText}>Accept</Text>
-                </Pressable>
-              ) : (
-                <Badge label="requested" />
-              )
-            ) : null}
-          </View>
+        renderItem={({ item, index }) => (
+          <FriendRowItem
+            item={item}
+            index={index}
+            onAccept={acceptRequest}
+          />
         )}
         ListFooterComponent={
           myHandle ? (
@@ -187,6 +179,61 @@ export default function Friends() {
         }
       />
     </View>
+  );
+}
+
+function FriendRowItem({
+  item,
+  index,
+  onAccept,
+}: {
+  item: FriendRow;
+  index: number;
+  onAccept: (item: FriendRow) => void;
+}) {
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 250,
+      delay: index * 45,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [anim, index]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.row,
+        {
+          opacity: anim,
+          transform: [
+            {
+              translateY: anim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [8, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
+      {item.status === 'pending' ? (
+        item.incoming ? (
+          <Pressable
+            style={styles.acceptButton}
+            onPress={() => onAccept(item)}
+          >
+            <Text style={styles.acceptText}>Accept</Text>
+          </Pressable>
+        ) : (
+          <Badge label="requested" />
+        )
+      ) : null}
+    </Animated.View>
   );
 }
 
