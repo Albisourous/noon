@@ -1,26 +1,37 @@
 import { Easing, StyleSheet } from 'react-native';
 import type { TextStyle, ViewStyle } from 'react-native';
 
+// Single source of truth for each hue's RGB triplet — retune the palette here.
+const hue = {
+  night: '21,18,49', // #151231 deep indigo night
+  ink: '242,239,230', // #f2efe6 warm cream light
+  accent: '167,139,250', // #a78bfa saturated violet
+  warm: '240,184,110', // #f0b86e lamp gold
+  poor: '201,138,155', // #c98a9b dusty rose
+} as const;
+
+const rgba = (base: string, alpha: number) => `rgba(${base},${alpha})`;
+
 export const colors = {
-  bg: '#14121f',
-  card: '#241f33',
-  chip: 'rgba(242,239,230,0.07)',
-  border: 'rgba(242,239,230,0.10)',
+  bg: '#151231',
+  card: '#25204a',
+  chip: rgba(hue.ink, 0.07),
+  border: rgba(hue.ink, 0.1),
   text: '#f2efe6',
-  secondary: '#9a93a8',
-  muted: '#6e6780',
-  accent: '#a3a0e8',
-  accentSoft: 'rgba(163,160,232,0.14)',
-  accentSoftStrong: 'rgba(163,160,232,0.24)',
-  accentBorder: 'rgba(163,160,232,0.65)',
+  secondary: '#a29cc4',
+  muted: '#6f6896',
+  accent: '#a78bfa',
+  accentSoft: rgba(hue.accent, 0.14),
+  accentSoftStrong: rgba(hue.accent, 0.24),
+  accentBorder: rgba(hue.accent, 0.65),
   accentWarm: '#f0b86e',
-  accentWarmSoft: 'rgba(240,184,110,0.16)',
-  poor: '#b98a94',
-  poorSoft: 'rgba(185,138,148,0.16)',
+  accentWarmSoft: rgba(hue.warm, 0.16),
+  poor: '#c98a9b',
+  poorSoft: rgba(hue.poor, 0.16),
   success: '#8fb894',
   danger: '#c9939b',
-  onAccent: '#191630',
-  scrim: 'rgba(20,18,31,0.72)',
+  onAccent: '#1a1330',
+  scrim: rgba(hue.night, 0.72),
 } as const;
 
 export const radius = { sm: 12, md: 18, lg: 24, pill: 999 } as const;
@@ -224,11 +235,7 @@ export const glow = {
 
 export const gradients = {
   excellentRow: {
-    colors: [
-      'rgba(240,184,110,0.42)',
-      'rgba(240,184,110,0.10)',
-      'rgba(240,184,110,0)',
-    ],
+    colors: [rgba(hue.warm, 0.42), rgba(hue.warm, 0.1), rgba(hue.warm, 0)],
     locations: [0, 0.65, 1],
     start: { x: 0, y: 0.5 },
     end: { x: 1, y: 0.5 },
