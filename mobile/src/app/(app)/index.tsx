@@ -345,10 +345,8 @@ function BoardRowItem({
         {item.score === null ? '·' : `#${index + 1}`}
       </Text>
       <View style={styles.rowMain}>
-        <Text style={styles.handle}>
-          {item.handle ?? 'unnamed'}
-          {item.user_id === myId ? ' (you)' : ''}
-        </Text>
+        <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
+        {item.user_id === myId ? <Badge label="you" /> : null}
         {item.late ? <Badge label="late" /> : null}
       </View>
       <Animated.Text
