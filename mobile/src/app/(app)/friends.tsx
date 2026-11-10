@@ -3,6 +3,7 @@ import {
   Alert,
   FlatList,
   LayoutAnimation,
+  Share,
   Pressable,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
 import {
   acceptFriendRequest,
   fetchFriendships,
+  fetchMyProfile,
   fetchProfiles,
   searchHandle,
   sendFriendRequest,
@@ -39,6 +41,7 @@ export default function Friends() {
   const [queryFocused, setQueryFocused] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [status, flashStatus] = useFlashStatus();
+  const [myHandle, setMyHandle] = useState('');
 
   const load = useCallback(async () => {
     const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';
@@ -62,6 +65,7 @@ export default function Friends() {
       }),
     );
     setLoaded(true);
+    fetchMyProfile().then((p) => setMyHandle(p?.handle ?? ''));
   }, []);
 
   useEffect(() => {
@@ -141,6 +145,20 @@ export default function Friends() {
             ) : null}
           </View>
         )}
+        ListFooterComponent={
+          myHandle ? (
+            <Pressable
+              style={styles.shareButton}
+              onPress={() =>
+                Share.share({
+                  message: `Add me on Sleeple: @${myHandle}`,
+                })
+              }
+            >
+              <Text style={styles.shareText}>Invite friends</Text>
+            </Pressable>
+          ) : undefined
+        }
         ListEmptyComponent={
           loaded ? (
             <EmptyState
@@ -179,6 +197,13 @@ const styles = StyleSheet.create({
   addText: { color: colors.text, fontWeight: '700' },
   status: { color: colors.secondary, marginBottom: 10, textAlign: 'center' },
   listContent: { paddingBottom: 120 },
+  shareButton: {
+    alignSelf: 'center',
+    marginTop: 24,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  shareText: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
