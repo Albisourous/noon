@@ -215,3 +215,16 @@ export const glow = {
     shadowOffset: { width: 0, height: 0 },
   },
 } satisfies Record<string, ViewStyle>;
+
+export const gradients = {
+  excellentRow: {
+    colors: [
+      'rgba(240,184,110,0.42)',
+      'rgba(240,184,110,0.10)',
+      'rgba(240,184,110,0)',
+    ],
+    locations: [0, 0.65, 1],
+    start: { x: 0, y: 0.5 },
+    end: { x: 1, y: 0.5 },
+  },
+} as const;

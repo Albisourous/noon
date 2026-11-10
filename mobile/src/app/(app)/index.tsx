@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { checkIn, fetchBoard, fetchMyProfile, localDateString, setHandle } from '../../lib/api';
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
@@ -20,6 +21,7 @@ import {
   colors,
   font,
   glow,
+  gradients,
   layout,
   motion,
   opacity,
@@ -404,12 +406,23 @@ function BoardRowItem({
       ]}
     >
       {item.score !== null ? (
-        <View
-          style={[
-            styles.rowFill,
-            { width: `${Math.min(item.score, 100)}%` },
-          ]}
-        />
+        band === 'excellent' ? (
+          <LinearGradient
+            {...gradients.excellentRow}
+            style={[
+              styles.rowFill,
+              { width: `${Math.min(item.score, 100)}%` },
+            ]}
+          />
+        ) : (
+          <View
+            style={[
+              styles.rowFill,
+              styles.rowFillBg,
+              { width: `${Math.min(item.score, 100)}%` },
+            ]}
+          />
+        )
       ) : null}
       <Text style={[styles.rank, index === 0 && styles.rankFirst]}>
         {item.score === null ? '·' : `#${index + 1}`}
@@ -514,10 +527,10 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: colors.accentSoft,
     borderTopRightRadius: radius.md,
     borderBottomRightRadius: radius.md,
   },
+  rowFillBg: { backgroundColor: colors.accentSoft },
   listContent: { paddingBottom: layout.listBottom },
   rank: {
     ...font.bodySmStrong,
