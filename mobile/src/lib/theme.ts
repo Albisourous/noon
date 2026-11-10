@@ -94,43 +94,109 @@ export const screen: ViewStyle = {
   paddingHorizontal: spacing.lg,
 };
 
+export const typeface = {
+  regular: 'Nunito-Regular',
+  semibold: 'Nunito-SemiBold',
+  bold: 'Nunito-Bold',
+  extrabold: 'Nunito-ExtraBold',
+} as const;
+
 export const font = {
   eyebrow: {
     color: colors.secondary,
     fontSize: 12,
     fontWeight: '700',
+    fontFamily: typeface.bold,
     letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
-  title: { color: colors.text, fontSize: 30, fontWeight: '700' },
-  display: { color: colors.text, fontSize: 40, fontWeight: '800' },
-  subtitle: { color: colors.secondary, fontSize: 17, fontWeight: '600' },
-  body: { color: colors.text, fontSize: 16, fontWeight: '400' },
-  bodyStrong: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  title: {
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: '700',
+    fontFamily: typeface.bold,
+  },
+  display: {
+    color: colors.text,
+    fontSize: 40,
+    fontWeight: '800',
+    fontFamily: typeface.extrabold,
+  },
+  subtitle: {
+    color: colors.secondary,
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: typeface.semibold,
+  },
+  body: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '400',
+    fontFamily: typeface.regular,
+  },
+  bodyStrong: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: typeface.semibold,
+  },
   bodySm: {
     color: colors.text,
     fontSize: 15,
     fontWeight: '400',
+    fontFamily: typeface.regular,
     lineHeight: 22,
   },
-  bodySmStrong: { color: colors.text, fontSize: 15, fontWeight: '700' },
-  bodySmHeavy: { color: colors.secondary, fontSize: 15, fontWeight: '900' },
-  caption: { color: colors.secondary, fontSize: 13, fontWeight: '500' },
-  label: { color: colors.secondary, fontSize: 14, fontWeight: '600' },
+  bodySmStrong: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: typeface.bold,
+  },
+  bodySmHeavy: {
+    color: colors.secondary,
+    fontSize: 15,
+    fontWeight: '900',
+    fontFamily: typeface.extrabold,
+  },
+  caption: {
+    color: colors.secondary,
+    fontSize: 13,
+    fontWeight: '500',
+    fontFamily: typeface.semibold,
+  },
+  label: {
+    color: colors.secondary,
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: typeface.semibold,
+  },
   hint: {
     color: colors.secondary,
     fontSize: 14,
     fontWeight: '400',
+    fontFamily: typeface.regular,
     lineHeight: 20,
   },
-  badge: { color: colors.secondary, fontSize: 11, fontWeight: '600' },
+  badge: {
+    color: colors.secondary,
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: typeface.semibold,
+  },
   score: {
     color: colors.accent,
     fontSize: 24,
     fontWeight: '800',
+    fontFamily: typeface.extrabold,
     fontVariant: ['tabular-nums'],
   },
-  button: { color: colors.onAccent, fontSize: 17, fontWeight: '700' },
+  button: {
+    color: colors.onAccent,
+    fontSize: 17,
+    fontWeight: '700',
+    fontFamily: typeface.bold,
+  },
 } satisfies Record<string, TextStyle>;
 
 export const glow = {
