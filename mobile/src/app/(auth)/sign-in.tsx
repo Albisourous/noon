@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -75,9 +76,14 @@ export default function SignIn() {
             onPress={sendOtp}
             disabled={busy || !email.trim()}
           >
-            <Text style={styles.buttonText}>
-              {busy ? 'Sending…' : 'Send code'}
-            </Text>
+            <View style={styles.buttonInner}>
+              {busy ? (
+                <ActivityIndicator color={colors.text} size="small" />
+              ) : null}
+              <Text style={styles.buttonText}>
+                {busy ? 'Sending…' : 'Send code'}
+              </Text>
+            </View>
           </Pressable>
         </View>
       ) : (
@@ -103,9 +109,14 @@ export default function SignIn() {
             onPress={verifyOtp}
             disabled={busy || !otp.trim()}
           >
-            <Text style={styles.buttonText}>
-              {busy ? 'Verifying…' : 'Verify'}
-            </Text>
+            <View style={styles.buttonInner}>
+              {busy ? (
+                <ActivityIndicator color={colors.text} size="small" />
+              ) : null}
+              <Text style={styles.buttonText}>
+                {busy ? 'Verifying…' : 'Verify'}
+              </Text>
+            </View>
           </Pressable>
         </View>
       )}
@@ -145,5 +156,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  buttonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
   error: { color: colors.danger, marginTop: 16 },
 });
