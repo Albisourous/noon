@@ -270,6 +270,7 @@ export default function Board() {
       <FlatList
         data={rows}
         keyExtractor={(r) => r.user_id}
+        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -456,6 +457,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.accentSoft,
   },
+  listContent: { paddingBottom: 120 },
   rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
   rankFirst: { fontWeight: '900', color: colors.secondary },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },

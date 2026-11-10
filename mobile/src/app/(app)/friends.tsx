@@ -128,6 +128,7 @@ export default function Friends() {
       <FlatList
         data={rows}
         keyExtractor={(r) => r.friendshipId}
+        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
@@ -182,6 +183,7 @@ const styles = StyleSheet.create({
   },
   addText: { color: colors.text, fontWeight: '700' },
   status: { color: colors.secondary, marginBottom: 10, textAlign: 'center' },
+  listContent: { paddingBottom: 120 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
