@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -18,6 +18,7 @@ import {
 } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
+import { useFlashStatus } from '../../lib/useFlashStatus';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
 import { SkeletonRows } from '../../components/SkeletonRows';
@@ -37,13 +38,7 @@ export default function Friends() {
   const [query, setQuery] = useState('');
   const [queryFocused, setQueryFocused] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [status, setStatus] = useState('');
-  const statusTimer = useRef<number | null>(null);
-  const flashStatus = (msg: string) => {
-    setStatus(msg);
-    if (statusTimer.current) clearTimeout(statusTimer.current);
-    statusTimer.current = setTimeout(() => setStatus(''), 5000);
-  };
+  const [status, flashStatus] = useFlashStatus();
 
   const load = useCallback(async () => {
     const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';

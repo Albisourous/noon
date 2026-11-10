@@ -16,6 +16,7 @@ import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
 import { scheduleNoonReminder } from '../../lib/notifications';
 import { isConfigured, supabase } from '../../lib/supabase';
 import { colors, font, radius, screen } from '../../lib/theme';
+import { useFlashStatus } from '../../lib/useFlashStatus';
 import type { BoardRow, SleepSession } from '../../lib/types';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
@@ -27,13 +28,7 @@ export default function Board() {
   const [myId, setMyId] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [status, setStatus] = useState('');
-  const statusTimer = useRef<number | null>(null);
-  const flashStatus = useCallback((msg: string) => {
-    setStatus(msg);
-    if (statusTimer.current) clearTimeout(statusTimer.current);
-    statusTimer.current = setTimeout(() => setStatus(''), 5000);
-  }, []);
+  const [status, flashStatus, setStatus] = useFlashStatus();
   const [needsHandle, setNeedsHandle] = useState<boolean | null>(null);
   const [handleInput, setHandleInput] = useState('');
   const [healthLinked, setHealthLinked] = useState(false);
