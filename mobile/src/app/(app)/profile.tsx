@@ -38,30 +38,40 @@ export default function Profile() {
     <View style={screen}>
       <Text style={styles.title}>Profile</Text>
 
-      <Text style={styles.label}>handle</Text>
-      <View style={styles.row}>
-        <TextInput
-          style={styles.input}
-          placeholder="yourhandle"
-          placeholderTextColor={colors.muted}
-          autoCapitalize="none"
-          value={handle}
-          onChangeText={setHandleValue}
-        />
-        <Pressable style={styles.saveButton} onPress={saveHandle}>
-          <Text style={styles.saveText}>Save</Text>
-        </Pressable>
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <TextInput
+            style={styles.input}
+            placeholder="yourhandle"
+            placeholderTextColor={colors.muted}
+            autoCapitalize="none"
+            value={handle}
+            onChangeText={setHandleValue}
+          />
+          <Pressable style={styles.saveButton} onPress={saveHandle}>
+            <Text style={styles.saveText}>Save</Text>
+          </Pressable>
+        </View>
       </View>
       {status ? <Text style={styles.status}>{status}</Text> : null}
 
-      <Text style={styles.label}>email</Text>
-      <Text style={styles.value}>{email}</Text>
+      <View style={styles.card}>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>email</Text>
+          <Text style={styles.value}>{email || '—'}</Text>
+        </View>
+        <View style={styles.separator} />
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>timezone</Text>
+          <Text style={styles.value}>{tz}</Text>
+        </View>
+      </View>
 
-      <Text style={styles.label}>timezone</Text>
-      <Text style={styles.value}>{tz}</Text>
-
-      <Pressable style={styles.signOut} onPress={() => supabase.auth.signOut()}>
-        <Text style={styles.signOutText}>Sign out</Text>
+      <Pressable
+        style={[styles.card, styles.signOutCard]}
+        onPress={() => supabase.auth.signOut()}
+      >
+        <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
     </View>
   );
@@ -69,32 +79,43 @@ export default function Profile() {
 
 const styles = StyleSheet.create({
   title: { ...font.title, marginBottom: 24 },
-  label: { color: colors.muted, fontSize: 13, marginTop: 16, marginBottom: 6 },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    padding: 12,
+    marginTop: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.chip,
+    marginHorizontal: 4,
+  },
+  label: { color: colors.muted, fontSize: 15 },
   row: { flexDirection: 'row', gap: 8 },
   input: {
     flex: 1,
-    backgroundColor: colors.card,
+    backgroundColor: colors.bg,
     color: colors.text,
-    borderRadius: radius.md,
-    padding: 14,
+    borderRadius: radius.sm,
+    padding: 12,
     fontSize: 16,
   },
   saveButton: {
     backgroundColor: colors.accent,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
   saveText: { color: colors.text, fontWeight: '700' },
-  status: { color: colors.secondary, marginTop: 8 },
-  value: { color: colors.text, fontSize: 16 },
-  signOut: {
-    marginTop: 48,
-    borderColor: colors.danger,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: 14,
-    alignItems: 'center',
-  },
-  signOutText: { color: colors.danger, fontWeight: '700' },
+  status: { color: colors.secondary, marginTop: 8, marginLeft: 4 },
+  value: { color: colors.text, fontSize: 15 },
+  signOutCard: { alignItems: 'center', padding: 16 },
+  signOutText: { color: colors.danger, fontWeight: '700', fontSize: 16 },
 });
