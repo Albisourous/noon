@@ -328,6 +328,14 @@ function BoardRowItem({
   const isPending = item.status !== 'missed' && item.score === null;
   const isMissed = item.status === 'missed';
   const isSelf = item.user_id === myId;
+  const band =
+    item.score === null
+      ? null
+      : item.score > 85
+        ? 'excellent'
+        : item.score >= 70
+          ? 'normal'
+          : 'poor';
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -398,6 +406,8 @@ function BoardRowItem({
       <Animated.Text
         style={[
           styles.score,
+          band === 'normal' && { color: colors.text },
+          band === 'poor' && { color: colors.muted },
           isPending && { color: colors.muted, opacity: pendingPulse },
           isMissed && styles.missedText,
           styles.scoreDigits,
