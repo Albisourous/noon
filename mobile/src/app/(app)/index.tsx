@@ -341,7 +341,7 @@ function BoardRowItem({
           ]}
         />
       ) : null}
-      <Text style={styles.rank}>
+      <Text style={[styles.rank, index === 0 && styles.rankFirst]}>
         {item.score === null ? '·' : `#${index + 1}`}
       </Text>
       <View style={styles.rowMain}>
@@ -353,6 +353,7 @@ function BoardRowItem({
         style={[
           styles.score,
           isPending && { color: colors.muted, opacity: pendingPulse },
+          styles.scoreDigits,
         ]}
       >
         {item.status === 'missed'
@@ -453,8 +454,10 @@ const styles = StyleSheet.create({
   },
   skeleton: { height: 58 },
   rank: { color: colors.muted, width: 36, fontSize: 15, fontWeight: '700' },
+  rankFirst: { fontWeight: '900', color: colors.secondary },
   rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   handle: { color: colors.text, fontSize: 16, fontWeight: '600' },
   score: { color: colors.accent, fontSize: 22, fontWeight: '800' },
+  scoreDigits: { fontVariant: ['tabular-nums'] },
   empty: { color: colors.muted, textAlign: 'center', marginTop: 40 },
 });
