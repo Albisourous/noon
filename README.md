@@ -18,6 +18,10 @@ No Docker required — uses hosted Supabase free tier.
 4. Copy `mobile/.env.example` to `mobile/.env.local` and fill in
    `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY`
    (project Settings → API).
+5. Bootstrap the first invite (app is invite-only): in the SQL editor run
+   `insert into invites (code) values ('your-code');` then sign in and open
+   `sleeple://invite/your-code` — or paste the code on the waitlist screen.
+   Mint more codes from the Friends tab after that.
 
 ## Run the app
 

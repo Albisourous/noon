@@ -42,6 +42,7 @@ import {
 } from '../../lib/theme';
 import { useFlashStatus } from '../../lib/useFlashStatus';
 import type { BoardRow, SleepSession } from '../../lib/types';
+import SleepBoard from '../../../widgets/SleepBoardWidget';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
 import NightFooter from '../../components/NightFooter';
@@ -83,20 +84,36 @@ export default function Board() {
         fetchBoard(today),
         fetchMyProfile(),
       ]);
-      setMyId(userData.user?.id ?? profile?.id ?? '');
+      const uid = userData.user?.id ?? profile?.id ?? '';
+      setMyId(uid);
       setNeedsHandle(profile?.handle == null);
       setInvited(profile?.invited ?? true);
-      setRows(
-        [...board].sort((a, b) =>
-          a.score === null && b.score === null
-            ? 0
-            : a.score === null
-              ? 1
-              : b.score === null
-                ? -1
-                : b.score - a.score,
-        ),
+      const sorted = [...board].sort((a, b) =>
+        a.score === null && b.score === null
+          ? 0
+          : a.score === null
+            ? 1
+            : b.score === null
+              ? -1
+              : b.score - a.score,
       );
+      setRows(sorted);
+      // Mirror the board onto the home-screen widget. Best-effort: the
+      // widget module is absent in runtimes without a dev build.
+      try {
+        SleepBoard.updateSnapshot({
+          wake_date: today,
+          rows: sorted.map((r) => ({
+            handle: r.handle ?? 'unnamed',
+            score: r.score,
+            status: r.status,
+            confidence: r.confidence,
+            isSelf: r.user_id === uid,
+          })),
+        });
+      } catch {
+        // widget module absent in runtimes without a dev build
+      }
     } catch (e) {
       flashStatus(String(e));
     } finally {

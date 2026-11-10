@@ -53,6 +53,8 @@ Supabase                                ▼
 - `friendships(requester_id, addressee_id, status)` — mutual only; `status=accepted`
 - `sleep_nights(user_id, wake_date, source, raw_json, asleep_min, inbed_min, awakenings, updated_at)` — PK `(user_id, wake_date)`, upsert = latest wins (industry convention per Terra docs)
 - `board_entries(user_id, wake_date, score, formula_version, posted_at, late)` — written once at check-in, immutable after
+- `invites(code, inviter_id, redeemed_by, created_at, redeemed_at)` — one-time codes; `profiles.invited` gates app access. `redeem_invite` sets `invited=true` and instantly friends inviter↔invitee (`status=accepted`), so a new user's board works day one. `inviter_id NULL` = bootstrap code.
+- `SleepBoard` home-screen widget (`mobile/widgets/`, expo-widgets): board snapshot pushed on every board load via `updateSnapshot`; tap opens the app (`widgetURL`).
 
 Board for user U on date D = `SELECT score FROM board_entries WHERE user_id ∈ (U ∪ accepted_friends(U)) AND wake_date = D`.
 
