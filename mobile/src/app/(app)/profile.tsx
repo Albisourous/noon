@@ -53,7 +53,13 @@ export default function Profile() {
             value={handle}
             onChangeText={setHandleValue}
           />
-          <Pressable style={styles.saveButton} onPress={saveHandle}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.saveButton,
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={saveHandle}
+          >
             <Text style={styles.saveText}>Save</Text>
           </Pressable>
         </View>
@@ -73,7 +79,11 @@ export default function Profile() {
       </View>
 
       <Pressable
-        style={[styles.card, styles.signOutCard]}
+        style={({ pressed }) => [
+          styles.card,
+          styles.signOutCard,
+          pressed && { opacity: 0.7 },
+        ]}
         onPress={() => supabase.auth.signOut()}
       >
         <Text style={styles.signOutText}>Sign Out</Text>

@@ -136,7 +136,10 @@ export default function Friends() {
           value={query}
           onChangeText={setQuery}
         />
-        <Pressable style={styles.addButton} onPress={onAdd}>
+        <Pressable
+          style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]}
+          onPress={onAdd}
+        >
           <Text style={styles.addText}>Add</Text>
         </Pressable>
       </View>
@@ -156,7 +159,10 @@ export default function Friends() {
         ListFooterComponent={
           myHandle ? (
             <Pressable
-              style={styles.shareButton}
+              style={({ pressed }) => [
+                styles.shareButton,
+                pressed && { opacity: 0.7 },
+              ]}
               onPress={() =>
                 Share.share({
                   message: `Add me on Sleeple: @${myHandle}`,
@@ -224,7 +230,10 @@ function FriendRowItem({
       {item.status === 'pending' ? (
         item.incoming ? (
           <Pressable
-            style={styles.acceptButton}
+            style={({ pressed }) => [
+              styles.acceptButton,
+              pressed && { opacity: 0.7 },
+            ]}
             onPress={() => onAccept(item)}
           >
             <Text style={styles.acceptText}>Accept</Text>

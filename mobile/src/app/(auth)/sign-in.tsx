@@ -66,7 +66,14 @@ export default function SignIn() {
             value={email}
             onChangeText={setEmail}
           />
-          <Pressable style={styles.button} onPress={sendOtp} disabled={busy}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={sendOtp}
+            disabled={busy}
+          >
             <Text style={styles.buttonText}>
               {busy ? 'Sending…' : 'Send code'}
             </Text>
@@ -86,7 +93,14 @@ export default function SignIn() {
             value={otp}
             onChangeText={setOtp}
           />
-          <Pressable style={styles.button} onPress={verifyOtp} disabled={busy}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={verifyOtp}
+            disabled={busy}
+          >
             <Text style={styles.buttonText}>
               {busy ? 'Verifying…' : 'Verify'}
             </Text>

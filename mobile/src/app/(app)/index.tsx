@@ -269,7 +269,10 @@ export default function Board() {
       </Animated.View>
       {myRow?.status === 'scored' ? (
         <Pressable
-          style={styles.shareButton}
+          style={({ pressed }) => [
+            styles.shareButton,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={() =>
             Share.share({
               message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight.`,
