@@ -1,4 +1,5 @@
 import { supabase, isConfigured } from './supabase';
+import { DEMO_STATE } from './demoState';
 import type { SleepSession, BoardRow, Profile, Friendship } from './types';
 
 const DEMO_BOARD: BoardRow[] = [
@@ -6,6 +7,18 @@ const DEMO_BOARD: BoardRow[] = [
   { user_id: 'f1', handle: 'ehsan', wake_date: '', score: 91, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
   { user_id: 'f2', handle: 'sarah', wake_date: '', score: 74, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: true },
   { user_id: 'f3', handle: 'marcus', wake_date: '', score: null, status: null, confidence: null, formula_version: 1, posted_at: '', late: false },
+];
+
+const DEMO_BOARD_LONG: BoardRow[] = [
+  ...DEMO_BOARD,
+  { user_id: 'f5', handle: 'noor', wake_date: '', score: 78, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f6', handle: 'pia', wake_date: '', score: 45, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f7', handle: 'jon', wake_date: '', score: 68, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f8', handle: 'mia', wake_date: '', score: 92, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f9', handle: 'kofi', wake_date: '', score: 55, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: true },
+  { user_id: 'f10', handle: 'lena', wake_date: '', score: 71, status: 'scored', confidence: 'solid', formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f11', handle: 'tariq', wake_date: '', score: null, status: 'missed', confidence: null, formula_version: 1, posted_at: '', late: false },
+  { user_id: 'f12', handle: 'sam', wake_date: '', score: 84, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: false },
 ];
 
 export function localDateString(d = new Date()): string {
@@ -42,7 +55,24 @@ export async function checkIn(payload: SleepSession | 'missed') {
 }
 
 export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
-  if (!isConfigured) return DEMO_BOARD;
+  if (!isConfigured) {
+    switch (DEMO_STATE) {
+      case 'empty':
+        return [];
+      case 'missed':
+        return DEMO_BOARD.map((r) =>
+          r.user_id === 'me' || r.user_id === 'f3'
+            ? { ...r, score: null, status: 'missed' as const, confidence: null }
+            : r,
+        );
+      case 'long':
+        return DEMO_BOARD_LONG;
+      case 'loading':
+        return new Promise<BoardRow[]>(() => {});
+      default:
+        return DEMO_BOARD;
+    }
+  }
   const { data, error } = await supabase.rpc('friend_board', {
     p_wake_date: wakeDate,
   });
@@ -52,7 +82,13 @@ export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
 
 export async function fetchMyProfile(): Promise<Profile | null> {
   if (!isConfigured) {
-    return { id: 'me', handle: 'albin', tz: 'America/New_York', created_at: '' };
+    if (DEMO_STATE === 'loading') return new Promise<Profile | null>(() => {});
+    return {
+      id: 'me',
+      handle: DEMO_STATE === 'onboarding' ? null : 'albin',
+      tz: 'America/New_York',
+      created_at: '',
+    };
   }
   const { data, error } = await supabase
     .from('profiles')
@@ -80,6 +116,7 @@ export async function fetchProfiles(ids: string[]): Promise<Profile[]> {
 }
 
 export async function setHandle(handle: string) {
+  if (!isConfigured) return { error: null };
   const { error } = await supabase
     .from('profiles')
     .update({ handle: handle.toLowerCase().trim() })
@@ -118,6 +155,7 @@ export async function acceptFriendRequest(friendshipId: string) {
 
 export async function fetchFriendships(): Promise<Friendship[]> {
   if (!isConfigured) {
+    if (DEMO_STATE === 'empty-friends') return [];
     return [
       { id: 'x1', requester_id: 'me', addressee_id: 'f1', status: 'accepted', created_at: '' },
       { id: 'x2', requester_id: 'f4', addressee_id: 'me', status: 'pending', created_at: '' },

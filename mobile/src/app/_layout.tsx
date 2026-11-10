@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { isConfigured, supabase } from '../lib/supabase';
+import { DEMO_STATE } from '../lib/demoState';
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -31,7 +32,7 @@ export default function RootLayout() {
   if (!isConfigured) {
     return (
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(app)" />
+        <Stack.Screen name={DEMO_STATE === 'otp' || DEMO_STATE === 'auth' ? '(auth)' : '(app)'} />
       </Stack>
     );
   }

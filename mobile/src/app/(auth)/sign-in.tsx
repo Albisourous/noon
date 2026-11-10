@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import PressableScale from '../../components/PressableScale';
+import { DEMO_STATE } from '../../lib/demoState';
 import { supabase } from '../../lib/supabase';
 import {
   colors,
@@ -20,9 +21,13 @@ import {
 } from '../../lib/theme';
 
 export default function SignIn() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(
+    DEMO_STATE === 'otp' ? 'friend@example.com' : '',
+  );
   const [otp, setOtp] = useState('');
-  const [stage, setStage] = useState<'email' | 'otp'>('email');
+  const [stage, setStage] = useState<'email' | 'otp'>(
+    DEMO_STATE === 'otp' ? 'otp' : 'email',
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [focused, setFocused] = useState('');
