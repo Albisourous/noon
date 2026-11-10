@@ -27,6 +27,12 @@ export default function Board() {
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState('');
+  const statusTimer = useRef<number | null>(null);
+  const flashStatus = useCallback((msg: string) => {
+    setStatus(msg);
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+    statusTimer.current = setTimeout(() => setStatus(''), 5000);
+  }, []);
   const [needsHandle, setNeedsHandle] = useState<boolean | null>(null);
   const [handleInput, setHandleInput] = useState('');
   const [healthLinked, setHealthLinked] = useState(false);
@@ -59,11 +65,11 @@ export default function Board() {
         ),
       );
     } catch (e) {
-      setStatus(String(e));
+      flashStatus(String(e));
     } finally {
       setLoaded(true);
     }
-  }, [today]);
+  }, [today, flashStatus]);
 
   useEffect(() => {
     load();
@@ -72,13 +78,13 @@ export default function Board() {
   async function postCheckIn(payload: SleepSession | 'missed') {
     const result = await checkIn(payload);
     if (result.status === 'missed') {
-      setStatus(
+      flashStatus(
         result.already_posted
           ? `Already posted for ${result.wake_date}`
           : `Missed day recorded for ${result.wake_date}`,
       );
     } else {
-      setStatus(
+      flashStatus(
         result.already_posted
           ? `Already posted for ${result.wake_date}: ${result.score}`
           : `Score ${result.score} posted for ${result.wake_date}`,
@@ -125,7 +131,7 @@ export default function Board() {
               {
                 text: 'Record missed',
                 onPress: () =>
-                  postCheckIn('missed').catch((e) => setStatus(String(e))),
+                  postCheckIn('missed').catch((e) => flashStatus(String(e))),
               },
             ],
           );
@@ -135,7 +141,7 @@ export default function Board() {
           return;
       }
     } catch (e) {
-      setStatus(String(e));
+      flashStatus(String(e));
     } finally {
       setBusy(false);
     }
@@ -211,7 +217,7 @@ export default function Board() {
           onPress={async () => {
             const { error } = await setHandle(handleInput);
             if (error) {
-              setStatus(error.message);
+              flashStatus(error.message);
               return;
             }
             const granted = await ensureSleepPermission();
