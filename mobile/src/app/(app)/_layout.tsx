@@ -11,6 +11,7 @@ export default function AppLayout() {
       blurEffect="systemChromeMaterialDark"
       shadowColor={colors.border}
       disableTransparentOnScrollEdge
+      minimizeBehavior="onScrollDown"
     >
       <NativeTabs.Trigger name="friends">
         <NativeTabs.Trigger.Label>Friends</NativeTabs.Trigger.Label>
