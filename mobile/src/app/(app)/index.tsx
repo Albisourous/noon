@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Easing,
@@ -249,15 +250,20 @@ export default function Board() {
           onPressIn={onPressIn}
           onPressOut={onPressOut}
         >
-          <Text style={styles.checkinText}>
-            {busy
-              ? 'Syncing…'
-              : myRow?.status === 'scored'
-                ? `Checked in — ${displayScore ?? myRow.score}`
-                : myRow?.status === 'missed'
-                  ? 'Checked in — missed'
-                  : 'Check in'}
-          </Text>
+          <View style={styles.checkinInner}>
+            {busy ? (
+              <ActivityIndicator color={colors.text} size="small" />
+            ) : null}
+            <Text style={styles.checkinText}>
+              {busy
+                ? 'Syncing…'
+                : myRow?.status === 'scored'
+                  ? `Checked in — ${displayScore ?? myRow.score}`
+                  : myRow?.status === 'missed'
+                    ? 'Checked in — missed'
+                    : 'Check in'}
+            </Text>
+          </View>
         </Pressable>
       </Animated.View>
       {status ? <Text style={styles.status}>{status}</Text> : null}
@@ -410,6 +416,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   checkinDisabled: { opacity: 0.6 },
+  checkinInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
   checkinGlow: {
     borderRadius: radius.lg,
     shadowColor: colors.accent,
