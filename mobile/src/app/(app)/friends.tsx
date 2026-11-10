@@ -34,6 +34,7 @@ import PressableScale from '../../components/PressableScale';
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
 import { SkeletonRows } from '../../components/SkeletonRows';
+import NightFooter from '../../components/NightFooter';
 import type { Friendship } from '../../lib/types';
 
 interface FriendRow {
@@ -173,18 +174,23 @@ export default function Friends() {
           />
         )}
         ListFooterComponent={
-          myHandle ? (
-            <PressableScale
-              accessibilityRole="button"
-              style={styles.shareButton}
-              onPress={() =>
-                Share.share({
-                  message: `Add me on Sleeple: @${myHandle}`,
-                })
-              }
-            >
-              <Text style={styles.shareText}>Invite friends</Text>
-            </PressableScale>
+          loaded ? (
+            <>
+              {myHandle ? (
+                <PressableScale
+                  accessibilityRole="button"
+                  style={styles.shareButton}
+                  onPress={() =>
+                    Share.share({
+                      message: `Add me on Sleeple: @${myHandle}`,
+                    })
+                  }
+                >
+                  <Text style={styles.shareText}>Invite friends</Text>
+                </PressableScale>
+              ) : null}
+              <NightFooter />
+            </>
           ) : undefined
         }
         ListEmptyComponent={
