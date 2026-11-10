@@ -15,6 +15,7 @@ export default function Profile() {
   const [email, setEmail] = useState('');
   const [tz, setTz] = useState('');
   const [status, setStatus] = useState('');
+  const [handleFocused, setHandleFocused] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -41,10 +42,14 @@ export default function Profile() {
       <View style={styles.card}>
         <View style={styles.row}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, handleFocused && styles.inputFocused]}
             placeholder="yourhandle"
             placeholderTextColor={colors.muted}
             autoCapitalize="none"
+            returnKeyType="done"
+            onSubmitEditing={saveHandle}
+            onFocus={() => setHandleFocused(true)}
+            onBlur={() => setHandleFocused(false)}
             value={handle}
             onChangeText={setHandleValue}
           />
@@ -106,7 +111,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     padding: 12,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
+  inputFocused: { borderColor: colors.accent },
   saveButton: {
     backgroundColor: colors.accent,
     borderRadius: radius.sm,
