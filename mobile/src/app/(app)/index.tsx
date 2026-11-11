@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Linking,
   StyleSheet,
   Text,
   TextInput,
@@ -86,7 +87,7 @@ const bandColor: Record<Exclude<Band, null>, string> = {
   poor: colors.poor,
 };
 
-type SessionState = 'none' | 'still_asleep' | null;
+type SessionState = 'none' | 'still_asleep' | 'unavailable' | null;
 
 export default function Home() {
   const today = localDateString();
@@ -126,15 +127,17 @@ export default function Home() {
           fetchPrevScored(d),
         ]);
         let state: SessionState = null;
-        // Silent check-in: no stored entry for today means the app reads
-        // HealthKit itself and posts the score without a button.
-        if (!e && d === today && DEMO_STATE === 'default') {
+        // Silent check-in: no stored entry for today — or only a
+        // 'missed' guess — means the app reads HealthKit itself and
+        // posts the score without a button. A real session upgrades
+        // the missed entry in checkIn.
+        if ((!e || e.status === 'missed') && d === today && DEMO_STATE === 'default') {
           const s = await getSleepState();
           if (s.kind === 'session') {
             await checkIn(s.session);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             e = await fetchEntry(d);
-          } else if (s.kind !== 'unavailable') {
+          } else {
             state = s.kind;
           }
         }
@@ -418,7 +421,18 @@ export default function Home() {
             <Text style={styles.stateText}>reading last night</Text>
           </View>
         ) : entry?.status === 'missed' ? (
-          <Text style={styles.missedHero}>missed</Text>
+          <View style={styles.readingWrap}>
+            <Text style={styles.emptyHero}>—</Text>
+            <Text style={styles.stateText}>missed</Text>
+            {date === today ? (
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => void load(date)}
+              >
+                <Text style={styles.missedLink}>check again</Text>
+              </PressableScale>
+            ) : null}
+          </View>
         ) : entry?.score != null ? (
           <>
             <Animated.Text
@@ -454,10 +468,28 @@ export default function Home() {
             <Text style={styles.stateText}>
               {sessionState === 'still_asleep'
                 ? 'still asleep'
-                : date === today
-                  ? 'no sleep recorded'
-                  : 'no entry'}
+                : sessionState === 'unavailable'
+                  ? 'health access is off'
+                  : date === today
+                    ? 'no sleep recorded'
+                    : 'no entry'}
             </Text>
+            {date === today && sessionState === 'unavailable' ? (
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => Linking.openSettings()}
+              >
+                <Text style={styles.missedLink}>open settings</Text>
+              </PressableScale>
+            ) : null}
+            {date === today && sessionState !== null ? (
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => void load(date)}
+              >
+                <Text style={styles.missedLink}>check again</Text>
+              </PressableScale>
+            ) : null}
             {date === today && sessionState === 'none' ? (
               <PressableScale
                 accessibilityRole="button"
@@ -529,7 +561,7 @@ const styles = StyleSheet.create({
   },
   heroCaption: { ...font.eyebrow, marginTop: spacing.xs },
   delta: { ...font.label, marginTop: spacing.sm },
-  missedHero: {
+  emptyHero: {
     ...font.display,
     color: colors.secondary,
   },
