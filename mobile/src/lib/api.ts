@@ -128,10 +128,11 @@ export async function checkIn(payload: SleepSession | 'missed'): Promise<{
     timeZone: tz,
   });
 
-  // Insert-first: an existing entry for this wake_date means the day is
-  // already posted — the entry is locked, return it as-is.
+  // Insert-first for scored entries: locked once written. A 'missed'
+  // entry is only a guess made before data arrived, so a real session
+  // found later upgrades it to scored rather than bouncing off.
   const existing = checkins[wake_date];
-  if (existing) {
+  if (existing?.status === 'scored') {
     return {
       wake_date,
       score: existing.score,

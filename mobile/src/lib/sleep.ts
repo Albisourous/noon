@@ -21,6 +21,8 @@ const ASLEEP_VALUES = new Set<number>([
   CategoryValueSleepAnalysis.asleepUnspecified,
 ]);
 
+const INBED_VALUES = new Set<number>([CategoryValueSleepAnalysis.inBed]);
+
 // Any of these mean the source wrote real stage data; a session made only
 // of inBed + asleepUnspecified is unstaged (e.g. some Garmin→Health writes).
 const STAGED_VALUES = new Set<number>([
@@ -122,7 +124,12 @@ export async function getSleepState(lookbackHours = 36): Promise<SleepState> {
   const scored = sessions.map((s) => ({
     start: s[0].startDate.toISOString(),
     end: s[s.length - 1].endDate.toISOString(),
-    asleepMin: Math.round(mergedMinutes(s, ASLEEP_VALUES)),
+    // Sources that write only inBed (some Garmin→Health paths) count zero
+    // asleep minutes and would vanish as 'none'. Fall back to merged
+    // inBed time instead — scored unstaged at 'building' confidence.
+    asleepMin: Math.round(
+      mergedMinutes(s, ASLEEP_VALUES) || mergedMinutes(s, INBED_VALUES),
+    ),
     inBedMin: Math.round(
       (s[s.length - 1].endDate.getTime() - s[0].startDate.getTime()) / 60000,
     ),
