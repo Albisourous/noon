@@ -80,6 +80,7 @@ export interface StoredEntry {
   asleep_min?: number;
   inbed_min?: number;
   awakenings?: number;
+  awake_min?: number;
   start?: string;
   end?: string;
 }
@@ -194,6 +195,7 @@ export async function checkIn(payload: SleepSession | 'missed'): Promise<{
     asleep_min: payload.asleepMin,
     inbed_min: payload.inBedMin,
     awakenings: payload.awakenings,
+    awake_min: payload.awakeMin,
     start: payload.start,
     end: payload.end,
   };

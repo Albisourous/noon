@@ -12,26 +12,31 @@ sync last night's sleep, get a score, see how your friends did.
 | Sync trigger | Check-in prompt at local noon (BeReal model) | Local notification → open app → HealthKit sync → score posts. Noon is the ritual prompt, not the scoring boundary — a session scores whenever it completes and the user next opens the app |
 | Social model | Friends (mutual), not groups | Boards are per-user views: "me + my friends." Groups deferred |
 | Visibility | Score only | Members see numbers, not breakdowns |
-| Scoring | Absolute targets, computed by us | Apple Health emits raw stages, NOT a score. Personalized targets = future `formula_version` upgrade |
+| Scoring | Apple Sleep Score structure, computed by us | HealthKit emits raw stages, not a score — Apple's score (duration 50 / bedtime 30 / interruptions 20) lives in the Health app, so we re-implement its published structure. Personalized targets = future `formula_version` upgrade |
 | Freeze | Score locked at check-in | Late device revisions update raw storage, not the locked entry |
 | Check-in policy | Forgiving — post anytime, marked late | Streaks deferred post-MVP |
 | Backend | Supabase (Postgres + Auth + Edge Functions) | Fast to ship, real SQL, scales fine at this size |
 | Notifications | iOS local notifications | Free, no APNs needed for v1 |
 
-## Score formula v1 (`formula_version = 1`)
+## Score formula v2 (`formula_version = 2`)
+
+Aligned with Apple's Sleep Score (watchOS 26 / Health app): duration 50 +
+bedtime consistency 30 + interruptions 20. Apple publishes the component
+weights, not the sub-curves — the curves below are documented
+approximations, so scores line up structurally, not bit-for-bit.
 
 All inputs derivable from `HKCategoryTypeIdentifier.sleepAnalysis` samples.
 
 | Component | Points | Definition |
 |---|---|---|
-| Duration | 60 | `min(asleep_hours / 8.0, 1.0) × 60` |
-| Efficiency | 25 | `asleep_time / in_bed_time`, capped at 95% → full marks |
-| Continuity | 15 | `max(0, 15 − 2×(awakenings − 1))` from `awake` segments inside the sleep session; if no stage data, redistribute to duration/efficiency |
+| Duration | 50 | `min(asleep_min / 480, 1.0) × 50` — 8h target |
+| Bedtime consistency | 30 | deviation of tonight's bedtime from the median of the last 13 check-in bedtimes; full marks within ±30 min, linear to 0 at ±3h. No history → full marks (nothing to deviate from) |
+| Interruptions | 20 | `max(0, 20 − 2×awakenings − 0.1×awake_min)` from `awake` segments inside the session; if no stage data, redistribute to duration/bedtime (80-pt base rescaled to 100) |
 
 - **Sleep night = primary session only** — longest in-bed span among completed, unscored sessions. Naps excluded (Bevel does the same). Sleep is a session `(start, end)`; `wake_date` is a derived label, never a primary key input.
 - **Sleep date = local wake date.** Wake up Tuesday → that's Tuesday's score. Every device agrees on this convention.
-- **Confidence tier per entry** (NOOP pattern — a sparse night reads honestly): staged nights post `confidence=solid`; nights with no real stage data (`inBed`/`asleepUnspecified` only) rescale duration+efficiency to 100 and post `confidence=building`, shown as `~score`. No fabricated awakenings.
-- Bands: <70 Poor, 70–85 Normal, >85 Excellent (Bevel-aligned, easy to explain).
+- **Confidence tier per entry** (NOOP pattern — a sparse night reads honestly): staged nights post `confidence=solid`; nights with no real stage data (`inBed`/`asleepUnspecified` only) rescale duration+bedtime to 100 and post `confidence=building`, shown as `~score`. No fabricated awakenings.
+- Bands (Apple Sleep Score, collapsed to three colors): ≤60 Poor, 61–80 Normal, ≥81 Excellent. Apple's five bands: 0–40 Very Low, 41–60 Low, 61–80 OK, 81–95 High, 96+ Very High.
 
 ## Architecture
 

@@ -78,7 +78,10 @@ type Band = 'excellent' | 'normal' | 'poor' | null;
 
 function bandFor(entry: StoredEntry | null): Band {
   if (!entry || entry.score === null) return null;
-  return entry.score > 85 ? 'excellent' : entry.score >= 70 ? 'normal' : 'poor';
+  // Apple Sleep Score bands collapsed to our three colors:
+  // Very Low + Low (0–60) → poor, OK (61–80) → normal, High + Very High
+  // (81+) → excellent.
+  return entry.score >= 81 ? 'excellent' : entry.score >= 61 ? 'normal' : 'poor';
 }
 
 const bandColor: Record<Exclude<Band, null>, string> = {

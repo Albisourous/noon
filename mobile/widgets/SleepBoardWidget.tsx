@@ -46,9 +46,9 @@ const SleepBoard = (
       ? POOR
       : r.score === null
         ? SECONDARY
-        : r.score > 85
+        : r.score >= 81
           ? WARM
-          : r.score < 70
+          : r.score < 61
             ? POOR
             : ACCENT;
 

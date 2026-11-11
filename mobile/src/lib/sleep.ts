@@ -147,6 +147,9 @@ export async function getSleepState(lookbackHours = 36): Promise<SleepState> {
       s,
       new Set([CategoryValueSleepAnalysis.awake]),
     ),
+    awakeMin: Math.round(
+      mergedMinutes(s, new Set([CategoryValueSleepAnalysis.awake])),
+    ),
     staged: s.some((sample) => STAGED_VALUES.has(sample.value)),
   }));
 
