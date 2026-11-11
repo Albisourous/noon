@@ -13,19 +13,15 @@ export default function AppLayout() {
       disableTransparentOnScrollEdge
       minimizeBehavior="onScrollDown"
     >
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'moon', selected: 'moon.fill' }} />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="board">
-        <NativeTabs.Trigger.Label>Board</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'list.number', selected: 'list.number' }} />
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="friends">
         <NativeTabs.Trigger.Label>Friends</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           sf={{ default: 'person.2', selected: 'person.2.fill' }}
         />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'moon', selected: 'moon.fill' }} />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>

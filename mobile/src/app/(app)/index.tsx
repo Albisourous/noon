@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -34,6 +33,7 @@ import {
 import { useFlashStatus } from '../../lib/useFlashStatus';
 import PressableScale from '../../components/PressableScale';
 import { SleepCat } from '../../components/SleepCat';
+import SleepBoard from '../../../widgets/SleepBoardWidget';
 
 function shiftDate(iso: string, days: number): string {
   const d = new Date(`${iso}T12:00:00`);
@@ -142,6 +142,24 @@ export default function Home() {
         setPrev(p);
         setSessionState(state);
         setNeedsHandle(profile?.handle == null);
+        // Mirror the day onto the home-screen widget. Best-effort: the
+        // widget module is absent in runtimes without a dev build.
+        try {
+          SleepBoard.updateSnapshot({
+            wake_date: d,
+            rows: [
+              {
+                handle: profile?.handle ?? 'me',
+                score: e?.score ?? null,
+                status: e?.status ?? null,
+                confidence: e?.confidence ?? null,
+                isSelf: true,
+              },
+            ],
+          });
+        } catch {
+          // widget module absent in runtimes without a dev build
+        }
       } catch (err) {
         flashStatus(String(err));
       } finally {
@@ -352,24 +370,20 @@ export default function Home() {
       ? Math.round((entry.asleep_min / entry.inbed_min) * 100)
       : null;
 
-  const metricRows: { label: string; value: string; anim: Animated.Value }[] =
-    [];
+  const metricRows: { value: string; anim: Animated.Value }[] = [];
   if (entry?.status === 'scored') {
     if (entry.asleep_min != null)
       metricRows.push({
-        label: 'asleep',
-        value: fmtHours(entry.asleep_min),
+        value: `${fmtHours(entry.asleep_min)} asleep`,
         anim: metricAnims[0],
       });
     if (entry.start && entry.end)
       metricRows.push({
-        label: 'window',
         value: `${fmtTime(entry.start)} to ${fmtTime(entry.end)}`,
         anim: metricAnims[1],
       });
     if (efficiency != null)
       metricRows.push({
-        label: 'quality',
         value: `${efficiency}% efficient${
           entry.awakenings != null ? `, ${entry.awakenings} wake-ups` : ''
         }`,
@@ -390,28 +404,7 @@ export default function Home() {
         if (Math.abs(dx) > 40) goDay(dx < 0 ? 1 : -1);
       }}
     >
-      <View style={styles.dateRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="previous day"
-          hitSlop={16}
-          onPress={() => goDay(-1)}
-          style={styles.chevron}
-        >
-          <Text style={styles.chevronText}>‹</Text>
-        </Pressable>
-        <Text style={styles.date}>{dateLabel(date, today)}</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="next day"
-          hitSlop={16}
-          onPress={() => goDay(1)}
-          disabled={date === today}
-          style={[styles.chevron, date === today && { opacity: 0.2 }]}
-        >
-          <Text style={styles.chevronText}>›</Text>
-        </Pressable>
-      </View>
+      <Text style={styles.date}>{dateLabel(date, today)}</Text>
 
       <Animated.View
         style={[
@@ -479,32 +472,27 @@ export default function Home() {
           </View>
         )}
 
-        {metricRows.length ? (
-          <View style={styles.metrics}>
-            {metricRows.map((row) => (
-              <Animated.View
-                key={row.label}
-                style={[
-                  styles.metricRow,
+        {metricRows.map((row, i) => (
+          <Animated.Text
+            key={i}
+            style={[
+              styles.metric,
+              {
+                opacity: row.anim,
+                transform: [
                   {
-                    opacity: row.anim,
-                    transform: [
-                      {
-                        translateY: row.anim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [motion.enter.rise, 0],
-                        }),
-                      },
-                    ],
+                    translateY: row.anim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [motion.enter.rise, 0],
+                    }),
                   },
-                ]}
-              >
-                <Text style={styles.metricLabel}>{row.label}</Text>
-                <Text style={styles.metricValue}>{row.value}</Text>
-              </Animated.View>
-            ))}
-          </View>
-        ) : null}
+                ],
+              },
+            ]}
+          >
+            {row.value}
+          </Animated.Text>
+        ))}
       </Animated.View>
 
       {status ? <Text style={styles.status}>{status}</Text> : null}
@@ -513,24 +501,7 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   date: { ...font.eyebrow, textAlign: 'center' },
-  chevron: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chevronText: {
-    color: colors.secondary,
-    fontSize: 30,
-    fontFamily: typeface.regular,
-    marginTop: -4,
-  },
   hero: {
     flex: 1,
     alignItems: 'center',
@@ -562,19 +533,12 @@ const styles = StyleSheet.create({
     ...font.display,
     color: colors.secondary,
   },
-  metrics: {
-    marginTop: spacing.xxl,
-    alignSelf: 'stretch',
-    paddingHorizontal: spacing.xl,
-    gap: spacing.lg,
+  metric: {
+    ...font.bodySm,
+    color: colors.secondary,
+    fontVariant: ['tabular-nums'],
+    marginTop: spacing.md,
   },
-  metricRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  metricLabel: { ...font.caption },
-  metricValue: { ...font.bodySmStrong, fontVariant: ['tabular-nums'] },
   eyebrow: { ...font.eyebrow, marginBottom: spacing.xs },
   title: { ...font.title, marginBottom: spacing.xl },
   onboardHint: {
