@@ -22,7 +22,7 @@ const DEMO_BOARD_LONG: BoardRow[] = [
   { user_id: 'f12', handle: 'sam', wake_date: '', score: 84, status: 'scored', confidence: 'building', formula_version: 1, posted_at: '', late: false },
 ];
 
-const FORMULA_VERSION = 1;
+const FORMULA_VERSION = 2;
 
 // Local-only board state. A check-in is a StoredEntry keyed by wake_date in
 // one JSON map — entries are immutable once written, matching the retired
@@ -177,7 +177,13 @@ export async function checkIn(payload: SleepSession | 'missed'): Promise<{
     };
   }
 
-  const { score, confidence } = scoreSession(payload);
+  // Bedtime consistency needs the user's recent bedtimes — the last 13
+  // scored check-ins, matching Apple's comparison window.
+  const priorBedtimes = Object.values(checkins)
+    .filter((e) => e.status === 'scored' && e.start)
+    .sort((a, b) => b.wake_date.localeCompare(a.wake_date))
+    .map((e) => e.start as string);
+  const { score, confidence } = scoreSession(payload, priorBedtimes);
   checkins[wake_date] = {
     wake_date,
     score,
@@ -359,13 +365,23 @@ export async function removeFriend(
 
 export async function fetchFriendships(): Promise<Friendship[]> {
   const friends = await readFriends();
-  return friends.map((f) => ({
-    id: `local-${f.handle}`,
-    // Pending rows are requests the user sent; accepted rows arrived
-    // from the other side, so 'albin' reads as "albin added you".
-    requester_id: f.status === 'pending' ? 'me' : f.handle,
-    addressee_id: f.status === 'pending' ? f.handle : 'me',
-    status: f.status,
-    created_at: f.added_at,
-  }));
+  const mine = await readHandle();
+  const today = localDateString();
+  const todayEntry = (await readCheckins())[today];
+  return friends.map((f) => {
+    // Only the device's own handle has a readable score — everyone
+    // else's stays null until a backend syncs them.
+    const self = f.handle === mine;
+    return {
+      id: `local-${f.handle}`,
+      // Pending rows are requests the user sent; accepted rows arrived
+      // from the other side, so 'albin' reads as "albin added you".
+      requester_id: f.status === 'pending' ? 'me' : f.handle,
+      addressee_id: f.status === 'pending' ? f.handle : 'me',
+      status: f.status,
+      created_at: f.added_at,
+      score: self ? (todayEntry?.score ?? null) : null,
+      score_status: self ? (todayEntry?.status ?? null) : null,
+    };
+  });
 }

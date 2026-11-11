@@ -40,6 +40,8 @@ interface FriendRow {
   handle: string | null;
   status: 'pending' | 'accepted';
   incoming: boolean;
+  score: number | null;
+  scoreStatus: 'scored' | 'missed' | null;
 }
 
 export default function Friends() {
@@ -68,6 +70,8 @@ export default function Friends() {
           handle: byId.get(otherId)?.handle ?? null,
           status: f.status,
           incoming: f.addressee_id === uid,
+          score: f.score ?? null,
+          scoreStatus: f.score_status ?? null,
         };
       }),
     );
@@ -233,6 +237,13 @@ function FriendRowItem({
     >
       <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
       <View style={styles.rowActions}>
+        {item.status === 'accepted' ? (
+          <Text style={styles.score}>
+            {item.scoreStatus === 'missed'
+              ? 'missed'
+              : (item.score ?? '—')}
+          </Text>
+        ) : null}
         {item.status === 'pending' ? (
           item.incoming ? (
             <PressableScale
@@ -304,6 +315,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  score: {
+    ...font.bodyStrong,
+    fontVariant: ['tabular-nums'],
+    minWidth: 28,
+    textAlign: 'right',
   },
   removeButton: {
     paddingVertical: spacing.sm,

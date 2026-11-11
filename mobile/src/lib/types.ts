@@ -11,6 +11,11 @@ export interface Friendship {
   addressee_id: string;
   status: 'pending' | 'accepted';
   created_at: string;
+  // The friend's latest known score. Populated by a backend once one
+  // exists; locally it only resolves when the friend is this device's
+  // own handle (e.g. seeded 'albin' on albin's phone).
+  score?: number | null;
+  score_status?: 'scored' | 'missed' | null;
 }
 
 export interface SleepNight {
@@ -48,6 +53,9 @@ export interface SleepSession {
   asleepMin: number;
   inBedMin: number;
   awakenings: number;
+  // Minutes marked awake inside the session — interruptions scoring needs
+  // duration, not just count. 0 for unstaged nights.
+  awakeMin: number;
   // false when the source wrote no real stage data (inBed +
   // asleepUnspecified only) — scored with redistributed weights,
   // flagged 'building' confidence on the board
