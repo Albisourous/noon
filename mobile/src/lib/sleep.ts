@@ -90,7 +90,10 @@ function mergedCount(
  */
 export async function getSleepState(lookbackHours = 36): Promise<SleepState> {
   const granted = await ensureSleepPermission();
-  if (!granted) return { kind: 'unavailable' };
+  if (!granted) {
+    console.log('[sleeple] sleep permission not granted');
+    return { kind: 'unavailable' };
+  }
 
   const now = new Date();
   const from = new Date(now.getTime() - lookbackHours * 3600 * 1000);
@@ -100,6 +103,13 @@ export async function getSleepState(lookbackHours = 36): Promise<SleepState> {
     ascending: true,
     filter: { date: { startDate: from, endDate: now } },
   });
+  console.log(
+    `[sleeple] ${samples.length} sleep samples since ${from.toISOString()}:`,
+    samples.map(
+      (s) =>
+        `${s.value} ${s.startDate.toISOString()}->${s.endDate.toISOString()}`,
+    ),
+  );
   if (samples.length === 0) return { kind: 'none' };
 
   // Cluster into sessions by time gap. inBed samples stay in: they define
@@ -143,6 +153,7 @@ export async function getSleepState(lookbackHours = 36): Promise<SleepState> {
   // Primary session = most asleep time, completed sessions only (the
   // still-asleep check above already handled an in-progress cluster).
   scored.sort((a, b) => b.asleepMin - a.asleepMin);
+  console.log('[sleeple] sessions:', JSON.stringify(scored));
   const primary = scored[0];
   if (primary.asleepMin <= 0) return { kind: 'none' };
   return { kind: 'session', session: primary };
