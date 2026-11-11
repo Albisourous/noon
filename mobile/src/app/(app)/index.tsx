@@ -1,25 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
   Animated,
-  FlatList,
-  Share,
+  Easing,
   Pressable,
-  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   checkIn,
-  fetchBoard,
+  fetchEntry,
   fetchMyProfile,
+  fetchPrevScored,
   localDateString,
   setHandle,
+  type StoredEntry,
 } from '../../lib/api';
 import { DEMO_STATE } from '../../lib/demoState';
 import { ensureSleepPermission, getSleepState } from '../../lib/sleep';
@@ -27,212 +24,260 @@ import { scheduleNoonReminder } from '../../lib/notifications';
 import {
   colors,
   font,
-  glow,
-  gradients,
-  layout,
   motion,
   opacity,
   radius,
   screen,
   spacing,
+  typeface,
 } from '../../lib/theme';
 import { useFlashStatus } from '../../lib/useFlashStatus';
-import type { BoardRow, SleepSession } from '../../lib/types';
-import SleepBoard from '../../../widgets/SleepBoardWidget';
-import { Badge } from '../../components/Badge';
-import { EmptyState } from '../../components/EmptyState';
-import NightFooter from '../../components/NightFooter';
 import PressableScale from '../../components/PressableScale';
-import { SkeletonRows } from '../../components/SkeletonRows';
 import { SleepCat } from '../../components/SleepCat';
 
-export default function Board() {
-  const [rows, setRows] = useState<BoardRow[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [myId, setMyId] = useState<string>('');
-  const [busy, setBusy] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [status, flashStatus, setStatus] = useFlashStatus();
+function shiftDate(iso: string, days: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return localDateString(d);
+}
+
+function dateLabel(iso: string, today: string): string {
+  if (iso === today) return 'today';
+  const d = new Date(`${iso}T12:00:00`);
+  return d
+    .toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    })
+    .toLowerCase();
+}
+
+// Short label for the delta line: 'yesterday' when adjacent, weekday
+// otherwise.
+function dayName(iso: string): string {
+  return new Date(`${iso}T12:00:00`)
+    .toLocaleDateString(undefined, { weekday: 'long' })
+    .toLowerCase();
+}
+
+function fmtTime(iso: string): string {
+  return new Date(iso)
+    .toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    .toLowerCase();
+}
+
+function fmtHours(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}h ${String(m).padStart(2, '0')}m`;
+}
+
+type Band = 'excellent' | 'normal' | 'poor' | null;
+
+function bandFor(entry: StoredEntry | null): Band {
+  if (!entry || entry.score === null) return null;
+  return entry.score > 85 ? 'excellent' : entry.score >= 70 ? 'normal' : 'poor';
+}
+
+const bandColor: Record<Exclude<Band, null>, string> = {
+  excellent: colors.accentWarm,
+  normal: colors.accent,
+  poor: colors.poor,
+};
+
+type SessionState = 'none' | 'still_asleep' | null;
+
+export default function Home() {
+  const today = localDateString();
+  const [date, setDate] = useState(today);
+  const [entry, setEntry] = useState<StoredEntry | null>(null);
+  const [prev, setPrev] = useState<StoredEntry | null>(null);
+  const [sessionState, setSessionState] = useState<SessionState>(null);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [needsHandle, setNeedsHandle] = useState<boolean | null>(null);
   const [handleInput, setHandleInput] = useState('');
-  const [healthLinked, setHealthLinked] = useState(false);
   const [handleFocused, setHandleFocused] = useState(false);
-  const listRef = useRef<FlatList<BoardRow>>(null);
-  const today = localDateString();
-  const displayDate = new Date().toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
+  const [healthLinked, setHealthLinked] = useState(false);
+  const [status, flashStatus] = useFlashStatus();
 
-  const load = useCallback(async () => {
-    try {
-      const [board, profile] = await Promise.all([
-        fetchBoard(today),
-        fetchMyProfile(),
-      ]);
-      const uid = profile?.id ?? '';
-      setMyId(uid);
-      setNeedsHandle(profile?.handle == null);
-      const sorted = [...board].sort((a, b) =>
-        a.score === null && b.score === null
-          ? 0
-          : a.score === null
-            ? 1
-            : b.score === null
-              ? -1
-              : b.score - a.score,
-      );
-      setRows(sorted);
-      // Mirror the board onto the home-screen widget. Best-effort: the
-      // widget module is absent in runtimes without a dev build.
-      try {
-        SleepBoard.updateSnapshot({
-          wake_date: today,
-          rows: sorted.map((r) => ({
-            handle: r.handle ?? 'unnamed',
-            score: r.score,
-            status: r.status,
-            confidence: r.confidence,
-            isSelf: r.user_id === uid,
-          })),
-        });
-      } catch {
-        // widget module absent in runtimes without a dev build
-      }
-    } catch (e) {
-      flashStatus(String(e));
-    } finally {
-      setLoaded(true);
-    }
-  }, [today, flashStatus]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // dev-only: scroll long board + seed status chip for screenshots
-  useEffect(() => {
-    if (DEMO_STATE !== 'long' || !__DEV__) return;
-    flashStatus(`Score 87 posted for ${today}`);
-    const t = setTimeout(() => {
-      listRef.current?.scrollToOffset({ offset: 600, animated: true });
-    }, 1500);
-    return () => clearTimeout(t);
-  }, [flashStatus, today]);
-
-  async function postCheckIn(payload: SleepSession | 'missed') {
-    const result = await checkIn(payload);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (result.status === 'missed') {
-      flashStatus(
-        result.already_posted
-          ? `Already posted for ${result.wake_date}`
-          : `Missed day recorded for ${result.wake_date}`,
-      );
-    } else {
-      flashStatus(
-        result.already_posted
-          ? `Already posted for ${result.wake_date}: ${result.score}`
-          : `Score ${result.score} posted for ${result.wake_date}`,
-      );
-    }
-    await load();
-  }
-
-  async function onCheckIn() {
-    setBusy(true);
-    setStatus('');
-    try {
-      if (DEMO_STATE !== 'default') {
-        await postCheckIn({
-          start: '',
-          end: '',
-          asleepMin: 0,
-          inBedMin: 0,
-          awakenings: 0,
-          staged: false,
-        });
-        return;
-      }
-      const state = await getSleepState();
-      switch (state.kind) {
-        case 'unavailable':
-          Alert.alert(
-            'Health access needed',
-            'Allow sleep data access in Settings to check in.',
-          );
-          return;
-        case 'still_asleep':
-          Alert.alert(
-            'Still asleep?',
-            'Your latest sleep session may still be in progress. Check in after you wake up so a partial night is not posted.',
-          );
-          return;
-        case 'none':
-          Alert.alert(
-            'No sleep found',
-            'No completed sleep session in the last 36 hours. Record a missed day?',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Record missed',
-                onPress: () =>
-                  postCheckIn('missed').catch((e) => flashStatus(String(e))),
-              },
-            ],
-          );
-          return;
-        case 'session':
-          await postCheckIn(state.session);
-          return;
-      }
-    } catch (e) {
-      flashStatus(String(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const myRow = rows.find((r) => r.user_id === myId);
-  const checkedScore = myRow?.status === 'scored' ? myRow.score : null;
-
-  const pressScale = useRef(new Animated.Value(1)).current;
-  const scoreAnim = useRef(new Animated.Value(0)).current;
+  // Animated values live in state initializers, not useRef — reading a
+  // ref during render trips the react-hooks/refs lint rule.
+  const [scoreAnim] = useState(() => new Animated.Value(0));
+  const [heroScale] = useState(() => new Animated.Value(1));
+  const [breathe] = useState(() => new Animated.Value(motion.breatheLoop.from));
+  const [tx] = useState(() => new Animated.Value(0));
+  const [fade] = useState(() => new Animated.Value(0));
+  const [metricAnims] = useState(() =>
+    [0, 1, 2].map(() => new Animated.Value(0)),
+  );
   const [displayScore, setDisplayScore] = useState<number | null>(null);
-  const revealedFor = useRef<number | null>(null);
+  const revealed = useRef(false);
+  const sliding = useRef(false);
+
+  const reading = loadedFor !== date;
+
+  const load = useCallback(
+    async (d: string) => {
+      try {
+        let e = await fetchEntry(d);
+        const [profile, p] = await Promise.all([
+          fetchMyProfile(),
+          fetchPrevScored(d),
+        ]);
+        let state: SessionState = null;
+        // Silent check-in: no stored entry for today means the app reads
+        // HealthKit itself and posts the score without a button.
+        if (!e && d === today && DEMO_STATE === 'default') {
+          const s = await getSleepState();
+          if (s.kind === 'session') {
+            await checkIn(s.session);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            e = await fetchEntry(d);
+          } else if (s.kind !== 'unavailable') {
+            state = s.kind;
+          }
+        }
+        setEntry(e);
+        setPrev(p);
+        setSessionState(state);
+        setNeedsHandle(profile?.handle == null);
+      } catch (err) {
+        flashStatus(String(err));
+      } finally {
+        setLoadedFor(d);
+      }
+    },
+    [today, flashStatus],
+  );
 
   useEffect(() => {
-    if (checkedScore === null) {
-      setDisplayScore(null);
-      return;
-    }
-    if (revealedFor.current === checkedScore) {
-      setDisplayScore(checkedScore);
-      return;
-    }
-    revealedFor.current = checkedScore;
-    scoreAnim.setValue(0);
+    const t = setTimeout(() => void load(date), 0);
+    return () => clearTimeout(t);
+  }, [date, load]);
+
+  // Content enter/exit for day changes. tx/fade drive the slide.
+  const goDay = useCallback(
+    (dir: 1 | -1) => {
+      if (sliding.current || (dir === 1 && date === today)) return;
+      sliding.current = true;
+      Haptics.selectionAsync();
+      Animated.timing(tx, {
+        toValue: dir * 24,
+        duration: 160,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        tx.setValue(-dir * 24);
+        setDate(shiftDate(date, dir));
+        Animated.timing(tx, {
+          toValue: 0,
+          duration: 220,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start(() => {
+          sliding.current = false;
+        });
+      });
+    },
+    [date, today, tx],
+  );
+
+  // Horizontal swipe to change day. Page-x deltas only; refs stay inside
+  // handlers, which the refs lint rule allows.
+  const touchX = useRef<number | null>(null);
+
+  const band = bandFor(entry);
+
+  // Score reveal: count up on the first scored view of the day; other
+  // days arrive with the slide instead of re-counting.
+  useEffect(() => {
     const sub = scoreAnim.addListener(({ value }) =>
       setDisplayScore(Math.round(value)),
     );
+    if (!entry || entry.score === null) {
+      return () => scoreAnim.removeListener(sub);
+    }
+    const isLiveReveal = date === today && !revealed.current;
+    if (!isLiveReveal) {
+      scoreAnim.setValue(entry.score);
+      return () => scoreAnim.removeListener(sub);
+    }
+    revealed.current = true;
+    scoreAnim.setValue(0);
     Animated.timing(scoreAnim, {
-      toValue: checkedScore,
-      ...motion.scoreReveal,
-    }).start(() => scoreAnim.removeListener(sub));
+      toValue: entry.score,
+      duration: 700,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => {
+      Animated.sequence([
+        Animated.timing(heroScale, {
+          toValue: 1.05,
+          duration: 140,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.spring(heroScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
     return () => scoreAnim.removeListener(sub);
-  }, [checkedScore, scoreAnim]);
+  }, [entry, date, today, scoreAnim, heroScale]);
 
-  const onPressIn = () =>
-    Animated.spring(pressScale, {
-      toValue: motion.pressScale,
-      ...motion.pressSpring,
-    }).start();
-  const onPressOut = () =>
-    Animated.spring(pressScale, {
-      toValue: 1,
-      ...motion.pressSpring,
-    }).start();
+
+  // Metrics + content fade stagger in after the hero settles.
+  useEffect(() => {
+    if (reading) return;
+    fade.setValue(0);
+    metricAnims.forEach((a) => a.setValue(0));
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.stagger(
+        motion.enter.stagger,
+        metricAnims.map((a) =>
+          Animated.timing(a, {
+            toValue: 1,
+            duration: motion.enter.duration,
+            easing: motion.enter.easing,
+            useNativeDriver: true,
+          }),
+        ),
+      ),
+    ]).start();
+  }, [reading, entry, fade, metricAnims]);
+
+  // Breathing dot while reading.
+  useEffect(() => {
+    if (!reading) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, {
+          toValue: motion.breatheLoop.to,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
+        }),
+        Animated.timing(breathe, {
+          toValue: motion.breatheLoop.from,
+          duration: motion.breatheLoop.half,
+          easing: motion.breatheLoop.easing,
+          useNativeDriver: motion.breatheLoop.useNativeDriver,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [reading, breathe]);
 
   if (needsHandle) {
     return (
@@ -287,293 +332,251 @@ export default function Board() {
     );
   }
 
+  const delta =
+    entry?.score != null && prev?.score != null
+      ? entry.score - prev.score
+      : null;
+  const deltaLabel =
+    delta === null
+      ? ''
+      : delta === 0
+        ? `even with ${prev && shiftDate(prev.wake_date, 1) === date ? 'yesterday' : dayName(prev!.wake_date)}`
+        : `${delta > 0 ? 'up' : 'down'} ${Math.abs(delta)} from ${
+            prev && shiftDate(prev.wake_date, 1) === date
+              ? 'yesterday'
+              : dayName(prev!.wake_date)
+          }`;
+
+  const efficiency =
+    entry?.asleep_min != null && entry?.inbed_min
+      ? Math.round((entry.asleep_min / entry.inbed_min) * 100)
+      : null;
+
+  const metricRows: { label: string; value: string; anim: Animated.Value }[] =
+    [];
+  if (entry?.status === 'scored') {
+    if (entry.asleep_min != null)
+      metricRows.push({
+        label: 'asleep',
+        value: fmtHours(entry.asleep_min),
+        anim: metricAnims[0],
+      });
+    if (entry.start && entry.end)
+      metricRows.push({
+        label: 'window',
+        value: `${fmtTime(entry.start)} to ${fmtTime(entry.end)}`,
+        anim: metricAnims[1],
+      });
+    if (efficiency != null)
+      metricRows.push({
+        label: 'quality',
+        value: `${efficiency}% efficient${
+          entry.awakenings != null ? `, ${entry.awakenings} wake-ups` : ''
+        }`,
+        anim: metricAnims[2],
+      });
+  }
+
   return (
-    <View style={screen}>
-      <Text style={styles.date}>{displayDate}</Text>
-      <Text style={styles.title}>Today's Board</Text>
+    <View
+      style={screen}
+      onTouchStart={(e) => {
+        touchX.current = e.nativeEvent.pageX;
+      }}
+      onTouchEnd={(e) => {
+        if (touchX.current == null) return;
+        const dx = e.nativeEvent.pageX - touchX.current;
+        touchX.current = null;
+        if (Math.abs(dx) > 40) goDay(dx < 0 ? 1 : -1);
+      }}
+    >
+      <View style={styles.dateRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="previous day"
+          hitSlop={16}
+          onPress={() => goDay(-1)}
+          style={styles.chevron}
+        >
+          <Text style={styles.chevronText}>‹</Text>
+        </Pressable>
+        <Text style={styles.date}>{dateLabel(date, today)}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="next day"
+          hitSlop={16}
+          onPress={() => goDay(1)}
+          disabled={date === today}
+          style={[styles.chevron, date === today && { opacity: 0.2 }]}
+        >
+          <Text style={styles.chevronText}>›</Text>
+        </Pressable>
+      </View>
 
       <Animated.View
         style={[
-          { transform: [{ scale: pressScale }] },
-          myRow?.status === 'scored' && styles.checkinGlow,
+          styles.hero,
+          { opacity: reading ? 1 : fade, transform: [{ translateX: tx }] },
         ]}
       >
-        <Pressable
-          accessibilityRole="button"
-          style={[styles.checkinButton, busy && styles.checkinDisabled]}
-          onPress={onCheckIn}
-          disabled={busy}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-        >
-          <View style={styles.checkinInner}>
-            {busy ? (
-              <ActivityIndicator color={colors.onAccent} size="small" />
-            ) : null}
-            <Text style={styles.checkinText}>
-              {busy
-                ? 'Syncing…'
-                : myRow?.status === 'scored'
-                  ? `Checked in — ${displayScore ?? myRow.score}`
-                  : myRow?.status === 'missed'
-                    ? 'Checked in — missed'
-                    : 'Check in'}
-            </Text>
+        {reading ? (
+          <View style={styles.readingWrap}>
+            <Animated.View style={[styles.dot, { opacity: breathe }]} />
+            <Text style={styles.stateText}>reading last night</Text>
           </View>
-        </Pressable>
-      </Animated.View>
-      {myRow?.status === 'scored' ? (
-        <PressableScale
-          accessibilityRole="button"
-          style={styles.shareButton}
-          onPress={() =>
-            Share.share({
-              message: `I scored ${myRow.score}/100 on Sleeple today. Beat my sleep tonight — add me: @${myRow.handle ?? ''}`,
-            })
-          }
-        >
-          <Text style={styles.shareText}>Share score</Text>
-        </PressableScale>
-      ) : null}
-      {status ? <Text style={styles.status}>{status}</Text> : null}
-
-      <FlatList
-        ref={listRef}
-        data={rows}
-        keyExtractor={(r) => r.user_id}
-        contentContainerStyle={styles.listContent}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              await load();
-              setRefreshing(false);
-            }}
-            tintColor={colors.accent}
-          />
-        }
-        renderItem={({ item, index }) => (
-          <BoardRowItem item={item} index={index} myId={myId} />
+        ) : entry?.status === 'missed' ? (
+          <Text style={styles.missedHero}>missed</Text>
+        ) : entry?.score != null ? (
+          <>
+            <Animated.Text
+              style={[
+                styles.heroScore,
+                { color: band ? bandColor[band] : colors.text },
+                band === 'excellent' && {
+                  textShadowColor: colors.accentWarm,
+                  textShadowRadius: 28,
+                  textShadowOffset: { width: 0, height: 0 },
+                },
+                { transform: [{ scale: heroScale }] },
+              ]}
+            >
+              {entry.confidence === 'building' ? '~' : ''}
+              {displayScore ?? entry.score}
+            </Animated.Text>
+            <Text style={styles.heroCaption}>sleep score</Text>
+            {deltaLabel ? (
+              <Text
+                style={[
+                  styles.delta,
+                  delta! > 0 && { color: colors.success },
+                  delta! < 0 && { color: colors.poor },
+                ]}
+              >
+                {deltaLabel}
+              </Text>
+            ) : null}
+          </>
+        ) : (
+          <View style={styles.readingWrap}>
+            <Text style={styles.stateText}>
+              {sessionState === 'still_asleep'
+                ? 'still asleep'
+                : date === today
+                  ? 'no sleep recorded'
+                  : 'no entry'}
+            </Text>
+            {date === today && sessionState === 'none' ? (
+              <PressableScale
+                accessibilityRole="button"
+                onPress={async () => {
+                  await checkIn('missed');
+                  await load(date);
+                }}
+              >
+                <Text style={styles.missedLink}>record a missed day</Text>
+              </PressableScale>
+            ) : null}
+          </View>
         )}
-        ListFooterComponent={loaded ? <NightFooter /> : undefined}
-        ListEmptyComponent={
-          loaded ? (
-            <EmptyState
-              title="No friends yet"
-              hint="Add friends from the Friends tab and their scores will show up here."
-            />
-          ) : (
-            <SkeletonRows />
-          )
-        }
-      />
+
+        {metricRows.length ? (
+          <View style={styles.metrics}>
+            {metricRows.map((row) => (
+              <Animated.View
+                key={row.label}
+                style={[
+                  styles.metricRow,
+                  {
+                    opacity: row.anim,
+                    transform: [
+                      {
+                        translateY: row.anim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [motion.enter.rise, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Text style={styles.metricLabel}>{row.label}</Text>
+                <Text style={styles.metricValue}>{row.value}</Text>
+              </Animated.View>
+            ))}
+          </View>
+        ) : null}
+      </Animated.View>
+
+      {status ? <Text style={styles.status}>{status}</Text> : null}
     </View>
   );
 }
 
-function BoardRowItem({
-  item,
-  index,
-  myId,
-}: {
-  item: BoardRow;
-  index: number;
-  myId: string;
-}) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const pendingPulse = useRef(new Animated.Value(1)).current;
-  const rankPulse = useRef(new Animated.Value(0)).current;
-  const prevIndex = useRef<number | null>(null);
-  const isPending = item.status !== 'missed' && item.score === null;
-  const isMissed = item.status === 'missed';
-  const isSelf = item.user_id === myId;
-  const band =
-    item.score === null
-      ? null
-      : item.score > 85
-        ? 'excellent'
-        : item.score >= 70
-          ? 'normal'
-          : 'poor';
-
-  useEffect(() => {
-    Animated.timing(anim, {
-      toValue: 1,
-      duration: motion.enter.duration,
-      delay: index * motion.enter.stagger,
-      easing: motion.enter.easing,
-      useNativeDriver: motion.enter.useNativeDriver,
-    }).start();
-  }, [anim, index]);
-
-  useEffect(() => {
-    if (prevIndex.current === null) {
-      prevIndex.current = index;
-      return;
-    }
-    if (prevIndex.current === index) return;
-    prevIndex.current = index;
-    rankPulse.setValue(0);
-    Animated.sequence([
-      Animated.timing(rankPulse, {
-        toValue: 1,
-        duration: motion.rankPulse.in,
-        easing: motion.enter.easing,
-        useNativeDriver: motion.rankPulse.useNativeDriver,
-      }),
-      Animated.timing(rankPulse, {
-        toValue: 0,
-        duration: motion.rankPulse.out,
-        easing: motion.enter.easing,
-        useNativeDriver: motion.rankPulse.useNativeDriver,
-      }),
-    ]).start();
-  }, [index, rankPulse]);
-
-  useEffect(() => {
-    if (!isPending) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pendingPulse, {
-          toValue: motion.breatheLoop.from,
-          duration: motion.breatheLoop.half,
-          easing: motion.breatheLoop.easing,
-          useNativeDriver: motion.breatheLoop.useNativeDriver,
-        }),
-        Animated.timing(pendingPulse, {
-          toValue: motion.breatheLoop.to,
-          duration: motion.breatheLoop.half,
-          easing: motion.breatheLoop.easing,
-          useNativeDriver: motion.breatheLoop.useNativeDriver,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [isPending, pendingPulse]);
-
-  return (
-    <Animated.View
-      style={[
-        styles.row,
-        isSelf && styles.rowSelf,
-        {
-          opacity: anim,
-          transform: [
-            {
-              translateY: anim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [motion.enter.rise, 0],
-              }),
-            },
-            {
-              scale: rankPulse.interpolate({
-                inputRange: [0, 1],
-                outputRange: [1, motion.rankPulse.scale],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      {item.score !== null ? (
-        band === 'excellent' ? (
-          <LinearGradient
-            {...gradients.excellentRow}
-            style={[
-              styles.rowFill,
-              { width: `${Math.min(item.score, 100)}%` },
-            ]}
-          />
-        ) : (
-          <View
-            style={[
-              styles.rowFill,
-              styles.rowFillBg,
-              { width: `${Math.min(item.score, 100)}%` },
-            ]}
-          />
-        )
-      ) : null}
-      <Text style={[styles.rank, index === 0 && styles.rankFirst]}>
-        {item.score === null ? '·' : `#${index + 1}`}
-      </Text>
-      <View style={styles.rowMain}>
-        <Text style={[styles.handle, isMissed && styles.missedText]}>
-          {item.handle ?? 'unnamed'}
-        </Text>
-        {isSelf ? <Badge label="you" tone="accent" /> : null}
-        {item.late ? <Badge label="late" tone="warm" /> : null}
-      </View>
-      <Animated.Text
-        style={[
-          styles.score,
-          band === 'excellent' && { color: colors.accentWarm },
-          band === 'poor' && { color: colors.poor },
-          isPending && styles.pending,
-          isPending && { opacity: pendingPulse },
-          isMissed && styles.missedText,
-        ]}
-      >
-        {item.status === 'missed' ? (
-          'missed'
-        ) : item.score === null ? (
-          'pending'
-        ) : item.confidence === 'building' ? (
-          <>
-            <Text style={styles.tilde}>~</Text>
-            {item.score}
-          </>
-        ) : (
-          String(item.score)
-        )}
-      </Animated.Text>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
-  date: { ...font.eyebrow },
-  eyebrow: { ...font.eyebrow, marginBottom: spacing.xs },
-  title: { ...font.title, marginBottom: spacing.xl },
-  checkinButton: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  checkinDisabled: { opacity: opacity.busy },
-  shareButton: {
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-  },
-  shareText: { ...font.label },
-  checkinInner: {
+  dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  date: { ...font.eyebrow, textAlign: 'center' },
+  chevron: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.md,
   },
-  checkinGlow: { borderRadius: radius.lg, ...glow.accentSoftGlow },
-  checkinText: { ...font.button },
-  status: {
-    ...font.caption,
-    alignSelf: 'center',
-    backgroundColor: colors.chip,
+  chevronText: {
+    color: colors.secondary,
+    fontSize: 30,
+    fontFamily: typeface.regular,
+    marginTop: -4,
+  },
+  hero: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  readingWrap: { alignItems: 'center', gap: spacing.md },
+  dot: {
+    width: 10,
+    height: 10,
     borderRadius: radius.pill,
-    paddingHorizontal: layout.badgePadX,
-    paddingVertical: layout.badgePadY,
-    marginTop: spacing.sm,
-    overflow: 'hidden',
+    backgroundColor: colors.accent,
   },
+  stateText: { ...font.label },
+  missedLink: {
+    ...font.label,
+    color: colors.accent,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  heroScore: {
+    fontSize: 112,
+    fontFamily: typeface.extrabold,
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
+  },
+  heroCaption: { ...font.eyebrow, marginTop: spacing.xs },
+  delta: { ...font.label, marginTop: spacing.sm },
+  missedHero: {
+    ...font.display,
+    color: colors.secondary,
+  },
+  metrics: {
+    marginTop: spacing.xxl,
+    alignSelf: 'stretch',
+    paddingHorizontal: spacing.xl,
+    gap: spacing.lg,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  metricLabel: { ...font.caption },
+  metricValue: { ...font.bodySmStrong, fontVariant: ['tabular-nums'] },
+  eyebrow: { ...font.eyebrow, marginBottom: spacing.xs },
+  title: { ...font.title, marginBottom: spacing.xl },
   onboardHint: {
     ...font.bodySm,
     color: colors.secondary,
@@ -589,46 +592,22 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   inputFocused: { borderColor: colors.accent },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
+  checkinButton: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.lg,
     padding: spacing.lg,
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  checkinText: { ...font.button },
+  status: {
+    ...font.caption,
+    alignSelf: 'center',
+    backgroundColor: colors.chip,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     marginTop: spacing.sm,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  rowSelf: { borderColor: colors.accentBorder },
-  rowFill: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    borderTopRightRadius: radius.md,
-    borderBottomRightRadius: radius.md,
-  },
-  rowFillBg: { backgroundColor: colors.accentSoft },
-  listContent: { paddingBottom: layout.listBottom },
-  rank: {
-    ...font.bodySmStrong,
-    color: colors.secondary,
-    width: layout.rankWidth,
-  },
-  rankFirst: { ...font.bodySmHeavy },
-  rowMain: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  handle: { ...font.bodyStrong },
-  score: { ...font.score },
-  pending: { ...font.bodySm, color: colors.secondary },
-  tilde: { ...font.body, color: colors.secondary },
-  missedText: {
-    color: colors.poor,
-    textDecorationLine: 'line-through',
   },
 });

@@ -31,13 +31,21 @@ const FORMULA_VERSION = 1;
 const CHECKINS_KEY = 'sleeple.checkins.v1';
 const HANDLE_KEY = 'sleeple.handle.v1';
 
-interface StoredEntry {
+export interface StoredEntry {
   wake_date: string;
   score: number | null;
   status: 'scored' | 'missed';
   confidence: 'solid' | 'building' | null;
   late: boolean;
   posted_at: string;
+  // Session metrics persisted at check-in so Home can show the night
+  // behind the score. Absent on entries written before these fields
+  // existed — render falls back to score-only.
+  asleep_min?: number;
+  inbed_min?: number;
+  awakenings?: number;
+  start?: string;
+  end?: string;
 }
 
 async function readCheckins(): Promise<Record<string, StoredEntry>> {
@@ -140,6 +148,11 @@ export async function checkIn(payload: SleepSession | 'missed'): Promise<{
     confidence,
     late,
     posted_at: now.toISOString(),
+    asleep_min: payload.asleepMin,
+    inbed_min: payload.inBedMin,
+    awakenings: payload.awakenings,
+    start: payload.start,
+    end: payload.end,
   };
   await writeCheckins(checkins);
   return {
@@ -182,6 +195,50 @@ export async function fetchBoard(wakeDate: string): Promise<BoardRow[]> {
       late: stored?.late ?? false,
     },
   ];
+}
+
+// The stored entry for one wake_date, or null. Powers Home's day
+// navigation — past days are read-only views of these records.
+export async function fetchEntry(wakeDate: string): Promise<StoredEntry | null> {
+  if (DEMO_STATE === 'loading') return new Promise<StoredEntry | null>(() => {});
+  if (DEMO_STATE === 'long') {
+    return {
+      wake_date: wakeDate,
+      score: 87,
+      status: 'scored',
+      confidence: 'solid',
+      late: false,
+      posted_at: '',
+      asleep_min: 432,
+      inbed_min: 474,
+      awakenings: 2,
+      start: '2026-11-09T23:47:00.000Z',
+      end: '2026-11-10T06:52:00.000Z',
+    };
+  }
+  if (DEMO_STATE === 'missed') {
+    return {
+      wake_date: wakeDate,
+      score: null,
+      status: 'missed',
+      confidence: null,
+      late: false,
+      posted_at: '',
+    };
+  }
+  return (await readCheckins())[wakeDate] ?? null;
+}
+
+// Most recent scored entry before wakeDate — the comparison point for
+// Home's "up/down from yesterday" line. Skips missed days and gaps.
+export async function fetchPrevScored(
+  wakeDate: string,
+): Promise<StoredEntry | null> {
+  const checkins = await readCheckins();
+  const prev = Object.values(checkins)
+    .filter((e) => e.wake_date < wakeDate && e.score !== null)
+    .sort((a, b) => b.wake_date.localeCompare(a.wake_date))[0];
+  return prev ?? null;
 }
 
 export async function fetchMyProfile(): Promise<Profile | null> {
