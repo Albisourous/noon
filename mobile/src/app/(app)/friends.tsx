@@ -13,6 +13,7 @@ import {
   acceptFriendRequest,
   fetchFriendships,
   fetchProfiles,
+  removeFriend,
   searchHandle,
   sendFriendRequest,
 } from '../../lib/api';
@@ -88,6 +89,27 @@ export default function Friends() {
     flashStatus('Friend request accepted');
   }
 
+  function onRemove(item: FriendRow) {
+    Alert.alert('Remove friend', `Remove ${item.handle ?? 'them'}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await removeFriend(item.friendshipId);
+          if (error) {
+            flashStatus(error.message);
+            return;
+          }
+          LayoutAnimation.configureNext(
+            LayoutAnimation.Presets[motion.listChange],
+          );
+          setRows((r) => r.filter((x) => x.friendshipId !== item.friendshipId));
+        },
+      },
+    ]);
+  }
+
   async function onAdd() {
     const target = await searchHandle(query);
     if (!target) {
@@ -150,6 +172,7 @@ export default function Friends() {
             item={item}
             index={index}
             onAccept={acceptRequest}
+            onRemove={onRemove}
           />
         )}
         ListFooterComponent={loaded ? <NightFooter /> : undefined}
@@ -172,10 +195,12 @@ function FriendRowItem({
   item,
   index,
   onAccept,
+  onRemove,
 }: {
   item: FriendRow;
   index: number;
   onAccept: (item: FriendRow) => void;
+  onRemove: (item: FriendRow) => void;
 }) {
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -207,19 +232,28 @@ function FriendRowItem({
       ]}
     >
       <Text style={styles.handle}>{item.handle ?? 'unnamed'}</Text>
-      {item.status === 'pending' ? (
-        item.incoming ? (
-          <PressableScale
-            accessibilityRole="button"
-            style={styles.acceptButton}
-            onPress={() => onAccept(item)}
-          >
-            <Text style={styles.acceptText}>Accept</Text>
-          </PressableScale>
-        ) : (
-          <Badge label="requested" />
-        )
-      ) : null}
+      <View style={styles.rowActions}>
+        {item.status === 'pending' ? (
+          item.incoming ? (
+            <PressableScale
+              accessibilityRole="button"
+              style={styles.acceptButton}
+              onPress={() => onAccept(item)}
+            >
+              <Text style={styles.acceptText}>Accept</Text>
+            </PressableScale>
+          ) : (
+            <Badge label="requested" />
+          )
+        ) : null}
+        <PressableScale
+          accessibilityRole="button"
+          style={styles.removeButton}
+          onPress={() => onRemove(item)}
+        >
+          <Text style={styles.removeText}>remove</Text>
+        </PressableScale>
+      </View>
     </Animated.View>
   );
 }
@@ -266,6 +300,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   handle: { ...font.bodyStrong },
+  rowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  removeButton: {
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.sm,
+  },
+  removeText: {
+    ...font.caption,
+    color: colors.secondary,
+  },
   acceptButton: {
     backgroundColor: colors.success,
     borderRadius: radius.md,

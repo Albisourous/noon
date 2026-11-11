@@ -30,6 +30,42 @@ const FORMULA_VERSION = 1;
 // wake_date wins).
 const CHECKINS_KEY = 'sleeple.checkins.v1';
 const HANDLE_KEY = 'sleeple.handle.v1';
+const FRIENDS_KEY = 'sleeple.friends.v1';
+
+// Every install starts with albin as an accepted friend — the tutorial
+// row. Seeded only when the key has never existed, so removing him
+// stays removed.
+const SEED_FRIEND = 'albin';
+
+interface StoredFriend {
+  handle: string;
+  status: 'accepted' | 'pending';
+  added_at: string;
+}
+
+async function readFriends(): Promise<StoredFriend[]> {
+  try {
+    const raw = await AsyncStorage.getItem(FRIENDS_KEY);
+    if (raw === null) {
+      const seed: StoredFriend[] = [
+        {
+          handle: SEED_FRIEND,
+          status: 'accepted',
+          added_at: new Date().toISOString(),
+        },
+      ];
+      await AsyncStorage.setItem(FRIENDS_KEY, JSON.stringify(seed));
+      return seed;
+    }
+    return JSON.parse(raw) as StoredFriend[];
+  } catch {
+    return [];
+  }
+}
+
+async function writeFriends(friends: StoredFriend[]): Promise<void> {
+  await AsyncStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
+}
 
 export interface StoredEntry {
   wake_date: string;
@@ -266,24 +302,70 @@ export async function setHandle(handle: string): Promise<{ error: ApiError }> {
   return { error: null };
 }
 
-// No backend — nobody is discoverable by handle. Friends tab stays as
-// honest-empty UI until a backend returns.
+// No backend — a search can't verify a real account, so any valid
+// handle resolves to a stub and the request is stored locally as
+// pending. When a backend returns this becomes a real lookup; the
+// pending rows can sync then.
 export async function searchHandle(handle: string): Promise<Profile | null> {
-  return null;
+  const h = handle.toLowerCase().trim();
+  if (!/^[a-z0-9_]{3,20}$/.test(h)) return null;
+  return { id: h, handle: h, tz: '', created_at: '' };
 }
 
 export async function sendFriendRequest(
   addresseeId: string,
 ): Promise<{ error: ApiError }> {
+  const handle = addresseeId.toLowerCase().trim();
+  if (handle === (await readHandle())) {
+    return { error: { message: "that's you" } };
+  }
+  const friends = await readFriends();
+  if (friends.some((f) => f.handle === handle)) {
+    return { error: { message: 'already in your circle' } };
+  }
+  friends.push({
+    handle,
+    status: 'pending',
+    added_at: new Date().toISOString(),
+  });
+  await writeFriends(friends);
   return { error: null };
 }
 
 export async function acceptFriendRequest(
   friendshipId: string,
 ): Promise<{ error: ApiError }> {
+  // Local rows the user adds are outgoing — nothing incoming exists
+  // without a backend. Kept so a future sync can flip real requests.
+  const friends = await readFriends();
+  const next = friends.map((f) =>
+    `local-${f.handle}` === friendshipId
+      ? { ...f, status: 'accepted' as const }
+      : f,
+  );
+  await writeFriends(next);
+  return { error: null };
+}
+
+export async function removeFriend(
+  friendshipId: string,
+): Promise<{ error: ApiError }> {
+  const friends = await readFriends();
+  await writeFriends(
+    friends.filter((f) => `local-${f.handle}` !== friendshipId),
+  );
   return { error: null };
 }
 
 export async function fetchFriendships(): Promise<Friendship[]> {
-  return [];
+  const friends = await readFriends();
+  return friends.map((f) => ({
+    id: `local-${f.handle}`,
+    // Pending rows are requests the user sent; accepted rows arrived
+    // from the other side, so 'albin' reads as "albin added you".
+    requester_id: f.status === 'pending' ? 'me' : f.handle,
+    addressee_id: f.status === 'pending' ? f.handle : 'me',
+    status: f.status,
+    created_at: f.added_at,
+  }));
 }
