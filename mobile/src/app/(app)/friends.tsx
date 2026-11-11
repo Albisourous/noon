@@ -4,7 +4,6 @@ import {
   Animated,
   FlatList,
   LayoutAnimation,
-  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -12,13 +11,11 @@ import {
 } from 'react-native';
 import {
   acceptFriendRequest,
-  createInvite,
   fetchFriendships,
   fetchProfiles,
   searchHandle,
   sendFriendRequest,
 } from '../../lib/api';
-import { isConfigured, supabase } from '../../lib/supabase';
 import {
   colors,
   font,
@@ -53,7 +50,7 @@ export default function Friends() {
   const [status, flashStatus] = useFlashStatus();
 
   const load = useCallback(async () => {
-    const uid = (await supabase.auth.getUser()).data.user?.id ?? 'me';
+    const uid = 'me';
     setMyId(uid);
     const friendships = await fetchFriendships();
     const otherIds = friendships.map((f) =>
@@ -107,21 +104,6 @@ export default function Friends() {
       return;
     }
     setQuery('');
-    if (!isConfigured) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets[motion.listChange]);
-      setRows((r) => [
-        ...r,
-        {
-          friendshipId: `demo-${target.id}`,
-          otherId: target.id,
-          handle: target.handle,
-          status: 'pending',
-          incoming: false,
-        },
-      ]);
-      flashStatus('Friend request sent');
-      return;
-    }
     await load();
   }
 
@@ -170,29 +152,7 @@ export default function Friends() {
             onAccept={acceptRequest}
           />
         )}
-        ListFooterComponent={
-          loaded ? (
-            <>
-              <PressableScale
-                accessibilityRole="button"
-                style={styles.shareButton}
-                onPress={async () => {
-                  const code = await createInvite();
-                  if (!code) {
-                    flashStatus('Invites unlock after you redeem yours');
-                    return;
-                  }
-                  Share.share({
-                    message: `Join my board on Sleeple — daily sleep scores with friends: sleeple://invite/${code}`,
-                  });
-                }}
-              >
-                <Text style={styles.shareText}>Invite friends</Text>
-              </PressableScale>
-              <NightFooter />
-            </>
-          ) : undefined
-        }
+        ListFooterComponent={loaded ? <NightFooter /> : undefined}
         ListEmptyComponent={
           loaded ? (
             <EmptyState
@@ -296,16 +256,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContent: { paddingBottom: layout.listBottom },
-  shareButton: {
-    alignSelf: 'center',
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-  },
-  shareText: { ...font.label },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

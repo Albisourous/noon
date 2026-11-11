@@ -2,7 +2,6 @@ export interface Profile {
   id: string;
   handle: string | null;
   tz: string;
-  invited: boolean;
   created_at: string;
 }
 
